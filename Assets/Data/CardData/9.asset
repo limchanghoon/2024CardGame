@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cardID: 9
   cardName: "\uB808\uB4DC \uB4DC\uB798\uACE4"
+  grade: 3
   cost: 4
   power: 4
   health: 4

@@ -1,9 +1,10 @@
+using System;
 using TMPro;
 
-public class ReUseScrollViewDeck : ReUseScrollViewContents<CardSO>
+public class ReUseScrollViewDeck : ReUseScrollViewContents<ValueTuple<CardSO, int>>
 {
     protected override void UpdateContent(int childIndex, int dataIndex)
     {
-        content.GetChild(childIndex).GetComponentInChildren<TextMeshProUGUI>().text = datas[dataIndex].cardName + " : " +datas[dataIndex].cost.ToString();
+        content.GetChild(childIndex).GetComponent<ButtonPullOutDeckMaker>().UpdateContent(datas[dataIndex], dataIndex);
     }
 }

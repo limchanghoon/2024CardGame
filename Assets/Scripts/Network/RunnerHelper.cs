@@ -3,10 +3,9 @@ using Fusion;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using TMPro;
 using System.Linq;
 using UnityEngine.SceneManagement;
-using static Unity.Collections.Unicode;
+using System.IO;
 
 public class RunnerHelper : MonoBehaviour, INetworkRunnerCallbacks
 {
@@ -144,16 +143,36 @@ public class RunnerHelper : MonoBehaviour, INetworkRunnerCallbacks
     public void OnSceneLoadDone(NetworkRunner runner)
     {
         Debug.Log("OnSceneLoadDone");
-        Player player = spawnedCharacter.GetComponent<Player>();
-        for (int i = 0; i < 50; ++i)
+        if (runner.SceneManager.MainRunnerScene.buildIndex == 1)
         {
-            var _netObject = runner.Spawn(player._cardPrefab, null, null, runner.LocalPlayer, (_runner, _obj) =>
+            // 임시로 0번 덱으로 시작
+            int slotIdx = 0;
+            string dirPath = Path.Combine(Application.persistentDataPath, "Deck");
+            if (!Directory.Exists(dirPath))
+                Directory.CreateDirectory(dirPath);
+
+            string path = Path.Combine(dirPath, "Slot" + slotIdx.ToString() + ".json");
+            if (!File.Exists(path))
             {
-                CardMono cardMono = _obj.GetComponent<CardMono>();
-                cardMono.uniqueID = _obj.Id;
-                player.AddToCardDictionary(_obj.Id, _obj);
-                player.deck.Set(i, _obj.Id);
-            });
+                Debug.LogAssertion("덱 정보가 없음!!!");
+                return;
+            }
+
+            string loadedJson = File.ReadAllText(path);
+            var loadedData = JsonUtility.FromJson<DeckData>(loadedJson);
+
+            Player player = spawnedCharacter.GetComponent<Player>();
+            for (int i = 0; i < 30; ++i)
+            {
+                var _netObject = runner.Spawn(player._cardPrefab, null, null, runner.LocalPlayer, (_runner, _obj) =>
+                {
+                    CardMono cardMono = _obj.GetComponent<CardMono>();
+                    cardMono.uniqueID = _obj.Id;
+                    cardMono.cardID = loadedData.cardIDs[i];
+                    player.AddToCardDictionary(_obj.Id, _obj);
+                    player.deck.Set(i, _obj.Id);
+                });
+            }
         }
     }
 

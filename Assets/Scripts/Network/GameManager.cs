@@ -107,6 +107,7 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
     [Rpc(RpcSources.All, RpcTargets.All)]
     public void RPC_Debug(string str) => Debug.Log(str);
 
+    // turn_에 해당하는 플레이어만 수행함
     public void DrawCard(int turn_)
     {
         Player curPlayer = players[turn_];

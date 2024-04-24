@@ -1,0 +1,133 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Packed Assets
+  m_EditorClassIdentifier: 
+  m_GroupName: Packed Assets
+  m_Data:
+    m_SerializedData: []
+  m_GUID: 69af01c2168567e4fb18d0520c87e835
+  m_SerializeEntries:
+  - m_GUID: ebf4d0ab62ac69b42bcedb447d2a3ba1
+    m_Address: Assets/Data/CardData/1.asset
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CardData
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b23d0b5edd0fb054eb5dff71baeea69b
+    m_Address: Assets/Data/CardData/4.asset
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CardData
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4d3e482bcbb4ba046a22a9a509694a87
+    m_Address: Assets/Data/CardData/3.asset
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CardData
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: abdb09be35376ba4aa578dd243731e76
+    m_Address: Assets/Data/CardData/9.asset
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CardData
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7a346e6303f55ec44a9170f7278f6d4f
+    m_Address: Assets/Data/CardData/8.asset
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CardData
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 52db2a0b024a9bd45a543e2357a14983
+    m_Address: Assets/Data/CardData/5.asset
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CardData
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 67d97032ab7abde489b3775b0c7c1600
+    m_Address: Assets/Data/CardData/2.asset
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CardData
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 58c9148a25af6a544bb8669723617b75
+    m_Address: Assets/Data/CardData/6.asset
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CardData
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 879c55423abd1054bbd84352b7b0eb60
+    m_Address: Assets/Data/CardData/7.asset
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CardData
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6d57328048977a341abefe36f3f991c5
+    m_Address: Assets/Data/CardData/10.asset
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CardData
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: de8c74ce276323e4b8d2adbec8d6e57c
+    m_Address: Assets/Data/CardData/11.asset
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CardData
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b06f940bf2f4b2b408822f70ded27c0d
+    m_Address: Assets/Data/CardData/12.asset
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CardData
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6bcab139a4105ef4c8c52d68bf72776b
+    m_Address: Assets/Data/CardData/13.asset
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CardData
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fdc91cee45f19fd4f95758d4e7a66f1f
+    m_Address: Assets/Data/CardData/14.asset
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CardData
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8d91da20a298ffd41aabd015d6c7a259
+    m_Address: Assets/Data/CardData/15.asset
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CardData
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e485701e3fc705143af1306f412955a7
+    m_Address: Assets/Data/CardData/16.asset
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CardData
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 24f5e498e36a41b448e4afd62ca168a5
+    m_Address: Assets/Data/CardData/17.asset
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CardData
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 506fa99e28e502c42a7abdc7eb7b5e18
+    m_Address: Assets/Data/CardData/18.asset
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CardData
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: cfdf89a287464a54dbcb0a0b2a352f7c, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 92580a5ae275aa642ba75556faa54e49, type: 2}
+    - {fileID: 11400000, guid: ad0ac1c26c220464a908b5f847810509, type: 2}

@@ -21,7 +21,7 @@ public abstract class ReUseScrollViewContents<T> : MonoBehaviour
 
     protected virtual void Awake()
     {
-        curIndex = 1;
+        curIndex = 0;
         childs = new RectTransform[content.childCount];
         for (int i = 0; i < content.childCount; i++)
         {
@@ -42,7 +42,7 @@ public abstract class ReUseScrollViewContents<T> : MonoBehaviour
 
     public virtual void SetInitPosition()
     {
-        curIndex = 1;
+        curIndex = 0;
         for (int i = 0; i < content.childCount; i++)
         {
             childs[i].anchoredPosition = new Vector2(0, -i * (cell_Y + spaceing_Y));
@@ -56,10 +56,15 @@ public abstract class ReUseScrollViewContents<T> : MonoBehaviour
         datas = inputData;
         itemSize = content.childCount;
         lastIndex = itemSize - 1;
+        UpdateAllContent();
+    }
+
+    public void UpdateAllContent()
+    {
         int i = 0;
-        for (; i < itemSize && i < datas.Count; i++)
+        for (; i < itemSize && curIndex + i < datas.Count; i++)
         {
-            UpdateContent(i, i);
+            UpdateContent(i, curIndex + i);
             content.GetChild(i).gameObject.SetActive(true);
         }
         for (; i < itemSize; i++)
@@ -72,16 +77,16 @@ public abstract class ReUseScrollViewContents<T> : MonoBehaviour
 
     protected void ScrollDown()
     {
-        if (curIndex + itemSize - 1 < datas.Count)
+        if (curIndex + itemSize < datas.Count)
         {
-            while (content.anchoredPosition.y >= (cell_Y + spaceing_Y) * (curIndex + 2 * itemSize))
+            while (content.anchoredPosition.y >= (cell_Y + spaceing_Y) * (curIndex + 2 * itemSize + 1))
             {
                 curIndex += itemSize;
             }
-            if (content.anchoredPosition.y >= (cell_Y + spaceing_Y) * curIndex)
+            if (content.anchoredPosition.y >= (cell_Y + spaceing_Y) * (curIndex+1))
             {
-                content.GetChild(0).GetComponent<RectTransform>().anchoredPosition = -new Vector2(0, cell_Y + spaceing_Y) * (curIndex + itemSize - 1);
-                UpdateContent(0, curIndex + itemSize - 1);
+                content.GetChild(0).GetComponent<RectTransform>().anchoredPosition = -new Vector2(0, cell_Y + spaceing_Y) * (curIndex + itemSize);
+                UpdateContent(0, curIndex + itemSize);
                 content.GetChild(0).SetAsLastSibling();
                 curIndex++;
                 ScrollDown();
@@ -91,16 +96,16 @@ public abstract class ReUseScrollViewContents<T> : MonoBehaviour
 
     protected void ScrollUp()
     {
-        if (curIndex > 1)
+        if (curIndex > 0)
         {
-            while (content.anchoredPosition.y < (cell_Y + spaceing_Y) * (curIndex - 1 - 2 * itemSize))
+            while (content.anchoredPosition.y < (cell_Y + spaceing_Y) * (curIndex - 2 * itemSize))
             {
                 curIndex -= itemSize;
             }
-            if (content.anchoredPosition.y < (cell_Y + spaceing_Y) * (curIndex - 1))
+            if (content.anchoredPosition.y < (cell_Y + spaceing_Y) * curIndex)
             {
-                content.GetChild(lastIndex).GetComponent<RectTransform>().anchoredPosition = -new Vector2(0, cell_Y + spaceing_Y) * (curIndex - 2);
-                UpdateContent(lastIndex, curIndex - 2);
+                content.GetChild(lastIndex).GetComponent<RectTransform>().anchoredPosition = -new Vector2(0, cell_Y + spaceing_Y) * (curIndex - 1);
+                UpdateContent(lastIndex, curIndex - 1);
                 content.GetChild(lastIndex).SetAsFirstSibling();
                 curIndex--;
                 ScrollUp();

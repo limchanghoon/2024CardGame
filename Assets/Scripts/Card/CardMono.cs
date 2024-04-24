@@ -3,6 +3,9 @@ using TMPro;
 using UnityEngine;
 using DG.Tweening;
 using Fusion;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
+using Unity.VisualScripting;
 
 public class CardMono : NetworkBehaviour
 {
@@ -24,6 +27,8 @@ public class CardMono : NetworkBehaviour
     Transform imageTr;
 
     [Networked] public NetworkId uniqueID {  get; set; }
+    [Networked] public int cardID {  get; set; }
+    AsyncOperationHandle<CardSO> op;
 
     private void Awake()
     {
@@ -35,8 +40,23 @@ public class CardMono : NetworkBehaviour
 
     private void Start()
     {
-        if (cardSO == null) return;
         origin = transform.position;
+    }
+
+    public override void Spawned()
+    {
+        var op = Addressables.LoadAssetAsync<CardSO>("Assets/Data/CardData/" + cardID.ToString() + ".asset");
+        CardSO _data = op.WaitForCompletion();
+        if (op.Result != null)
+        {
+            cardSO = _data;
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (op.IsValid())
+            Addressables.Release(op);
     }
 
     private void OnMouseEnter()
