@@ -5,11 +5,11 @@ using DG.Tweening;
 using Fusion;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
-using Unity.VisualScripting;
+using System;
 
 public class CardMono : NetworkBehaviour
 {
-    NetworkObject networkObject;
+    public NetworkObject networkObject;
     [SerializeField] CardSO cardSO;
     [SerializeField] SpriteRenderer spriteRender;
     [SerializeField] TextMeshPro nameText;
@@ -17,40 +17,54 @@ public class CardMono : NetworkBehaviour
     [SerializeField] TextMeshPro powerText;
     [SerializeField] TextMeshPro healthText;
     [SerializeField] GameObject frontFace;
-    [SerializeField] GameObject backFace;
-    [SerializeField] GameObject backFaceGlow;
+    public GameObject backFace;
+    public GameObject backFaceGlow;
 
-    [Networked, OnChangedRender(nameof(OnisZoomingChanged))][SerializeField] private bool isZooming { get; set; }
-    [Networked, OnChangedRender(nameof(OnisZoomingChanged))][SerializeField] private bool isDragging { get; set; }
+    [HideInInspector, Networked] public NetworkObject Target { get; set; }
+    [HideInInspector] public Player owner;
+    [Networked, OnChangedRender(nameof(OnIsZoomingChanged))] public bool isZooming { get; set; }
+    [Networked, OnChangedRender(nameof(OnIsZoomingChanged))] public bool isDragging { get; set; }
 
-    public Vector3 origin;
-    Transform imageTr;
+    public Vector3 originPos { get; set; }
+    public Quaternion originRot { get; set; }
+    public Transform imageTr;
 
     [Networked] public NetworkId uniqueID {  get; set; }
     [Networked] public int cardID {  get; set; }
     AsyncOperationHandle<CardSO> op;
 
-    private void Awake()
-    {
-        imageTr = transform.GetChild(0).GetComponent<Transform>();
-        networkObject = GetComponent<NetworkObject>();
-
-        transform.position = new Vector3(9999, 9999, 9999);
-    }
-
-    private void Start()
-    {
-        origin = transform.position;
-    }
+    IMyMouseEvent currentMouseEvent;
+    HandMouseEvent handMouseEvent;
+    FieldMouseEvent fieldMouseEvent;
 
     public override void Spawned()
     {
+        networkObject = GetComponent<NetworkObject>();
+
         var op = Addressables.LoadAssetAsync<CardSO>("Assets/Data/CardData/" + cardID.ToString() + ".asset");
         CardSO _data = op.WaitForCompletion();
         if (op.Result != null)
         {
             cardSO = _data;
         }
+
+        owner = Target.GetComponent<Player>();
+
+        if (networkObject.HasInputAuthority)
+        {
+            handMouseEvent = new HandMouseEvent(this);
+            fieldMouseEvent = new FieldMouseEvent(this);
+            currentMouseEvent = handMouseEvent;
+        }
+
+        nameText.text = cardSO.cardName;
+        costText.text = cardSO.cost.ToString();
+        powerText.text = cardSO.power.ToString();
+        healthText.text = cardSO.health.ToString();
+
+        transform.position = networkObject.HasInputAuthority ? new Vector3(11f, -2.5f, 0f) : new Vector3(11f, 2.5f, 0f);
+        frontFace.SetActive(networkObject.HasInputAuthority);
+        backFace.SetActive(!networkObject.HasInputAuthority);
     }
 
     private void OnDestroy()
@@ -61,88 +75,84 @@ public class CardMono : NetworkBehaviour
 
     private void OnMouseEnter()
     {
-        if (!networkObject.HasInputAuthority) return;
-        if (isDragging || isZooming) return;
-        isZooming = true;
-        imageTr.DOScale(Vector3.one * 1.5f, 0.2f);
-        imageTr.DOLocalMove(new Vector3(0, 3f, -100f), 0f);
+        if (currentMouseEvent == null) return;
+        currentMouseEvent.OnMyMouseEnter();
     }
 
     private void OnMouseExit()
     {
-        if (!networkObject.HasInputAuthority) return;
-        if (isDragging) return;
-        isZooming = false;
-        imageTr.DOScale(new Vector3(0.4f, 0.4f, 1f), 0.2f);
-        imageTr.DOLocalMove(Vector3.zero, 0f);
+        if (currentMouseEvent == null) return;
+        currentMouseEvent.OnMyMouseExit();
     }
 
     private void OnMouseDown()
     {
-        if (!networkObject.HasInputAuthority) return;
-        OnMouseExit();
-        isDragging = true;
-        origin = transform.position;
+        if (currentMouseEvent == null) return;
+        currentMouseEvent.OnMyMouseDown();
     }
 
     private void OnMouseDrag()
     {
-        if (!networkObject.HasInputAuthority) return;
-        Vector3 _pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        _pos.z = -100f;
-        transform.position = _pos;
+        if (currentMouseEvent == null) return;
+        currentMouseEvent.OnMyMouseDrag();
     }
 
     private void OnMouseUp()
     {
-        if (!networkObject.HasInputAuthority) return;
-        transform.DOMove(origin, 0f);
-        StartCoroutine(OnMouseUpCoroutine());
+        if (currentMouseEvent == null) return;
+        currentMouseEvent.OnMyMouseUp();
     }
 
-    private void OnisZoomingChanged()
+    private void OnIsZoomingChanged()
     {
-        if (networkObject.HasInputAuthority) return;
-        if (isZooming || isDragging) backFaceGlow.SetActive(true);
-        else backFaceGlow.SetActive(false);
+        if (currentMouseEvent == null) return;
+        currentMouseEvent.OnIsZoomingChanged();
     }
 
-    // transform.DOMove(origin, 0f); 이후에 콜라이더도 완전히 이동한 뒤
-    // OnMouseOver이면 OnMouseEnter실행 시킴
-    private IEnumerator OnMouseUpCoroutine()
+    private bool DraggingCardInMyHandArea()
     {
-        yield return new WaitForFixedUpdate();
-        isDragging = false;
-        Vector2 pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        Ray2D ray = new Ray2D(pos, Vector2.zero);
-        RaycastHit2D hit = Physics2D.Raycast(ray.origin, ray.direction, Mathf.Infinity);
-        if (hit && hit.collider.gameObject == gameObject)
-        {
-            OnMouseEnter();
-        }
+        if (currentMouseEvent == null) return false;
+        return currentMouseEvent.DraggingCardInMyHandArea();
     }
 
     [Rpc(RpcSources.All, RpcTargets.All)]
-    public void RPC_SetPosition(int idx)
+    public void RPC_ChangeState(CardState cardState)
     {
-        if (networkObject.HasInputAuthority)
+        switch(cardState)
         {
-            frontFace.SetActive(true);
-            backFace.SetActive(false);
+            case CardState.Hand:
+                currentMouseEvent = handMouseEvent;
 
-            nameText.text = cardSO.cardName;
-            costText.text = cardSO.cost.ToString();
-            powerText.text = cardSO.power.ToString();
-            healthText.text = cardSO.health.ToString();
+                frontFace.SetActive(networkObject.HasInputAuthority);
+                backFace.SetActive(!networkObject.HasInputAuthority);
 
-            transform.position = new Vector3(-5f + idx, -5f, -idx);
+                break;
+            case CardState.Field:
+                currentMouseEvent = fieldMouseEvent;
+
+                frontFace.SetActive(true);
+                backFace.SetActive(false);
+                break;
+            case CardState.Cemetry:
+                break;
+            default:
+                Debug.LogAssertion("CardState 이상한 것 들어옴!! : " + cardState.ToString());
+                break;
         }
-        else
-        {
-            frontFace.SetActive(false);
-            backFace.SetActive(true);
+    }
 
-            transform.position = new Vector3(-5f + idx, 5f, -idx);
-        }
+
+    public void SetPR(Vector3 des, Quaternion rot, float _t)
+    {
+        transform.DOMove(des, _t);
+        transform.DORotateQuaternion(rot, _t);
+
+        originPos = des;
+        originRot = rot;
+    }
+
+    public bool IsMyTurn()
+    {
+        return owner.IsMyTurn();
     }
 }

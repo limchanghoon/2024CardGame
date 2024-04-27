@@ -160,6 +160,7 @@ public class RunnerHelper : MonoBehaviour, INetworkRunnerCallbacks
 
             string loadedJson = File.ReadAllText(path);
             var loadedData = JsonUtility.FromJson<DeckData>(loadedJson);
+            loadedData.Shuffle();
 
             Player player = spawnedCharacter.GetComponent<Player>();
             for (int i = 0; i < 30; ++i)
@@ -169,8 +170,9 @@ public class RunnerHelper : MonoBehaviour, INetworkRunnerCallbacks
                     CardMono cardMono = _obj.GetComponent<CardMono>();
                     cardMono.uniqueID = _obj.Id;
                     cardMono.cardID = loadedData.cardIDs[i];
+                    cardMono.Target = spawnedCharacter;
                     player.AddToCardDictionary(_obj.Id, _obj);
-                    player.deck.Set(i, _obj.Id);
+                    player.deck.Add(_obj.Id);
                 });
             }
         }

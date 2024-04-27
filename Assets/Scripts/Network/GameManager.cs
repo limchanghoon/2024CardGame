@@ -2,6 +2,7 @@ using Fusion;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -71,7 +72,7 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
     {
         current = turn;
         DrawCard(current);
-        if (order.Get(current) == Runner.LocalPlayer.PlayerId)
+        if (IsMyTurn())
         {
             textMeshProUGUI.text = "내 차례";
             btn_EndTurn.interactable = true;
@@ -99,6 +100,9 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
             players[0] = _players[1].GetComponent<Player>();
             players[1] = _players[0].GetComponent<Player>();
         }
+
+        players[0].gameManager = this;
+        players[1].gameManager = this;
         if (!networkObject.HasStateAuthority) return;
 
         RPC_TurnNext(0);
@@ -112,33 +116,23 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
     {
         Player curPlayer = players[turn_];
         if (!curPlayer.HasStateAuthority) return;
-        int i = 0;
-        for (; i < curPlayer.hand.Length; ++i)
-        {
-            if (curPlayer.hand[i] == default) break;
-        }
 
-        int j = 0;
-        for (; j < curPlayer.deck.Length; ++j)
-        {
-            if (curPlayer.deck[j] != default) break;
-        }
-
-        if (j == curPlayer.deck.Length)
+        if (curPlayer.deck.Count == 0)
         {
             Debug.Log("덱 없음! => 데미지 받아야함!");
             return;
         }
-        if (i == curPlayer.hand.Length)
+        if (curPlayer.hand.Count == curPlayer.hand.Capacity)
         {
             Debug.Log("핸드 꽉참! => 드로우 카드 삭제");
-            curPlayer.deck.Set(j, default);
+            curPlayer.deck.Remove(curPlayer.deck.ElementAt(0));
             return;
         }
 
-        curPlayer.hand.Set(i, curPlayer.deck[j]);
-        curPlayer.deck.Set(j, default);
-        curPlayer.GetCard(curPlayer.hand[i]).RPC_SetPosition(i);
+        NetworkId temp = curPlayer.deck.ElementAt(0);
+
+        curPlayer.hand.Add(temp);
+        curPlayer.deck.Remove(temp);
     }
 
     /*
@@ -160,5 +154,30 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
     public void OnTimerChanged()
     {
         textMeshProUGUI.text = timer.ToString();
+    }
+
+    public Player GetMyPlayer()
+    {
+        if (players[0] == null) return null;
+        for(int i = 0;i < players.Length; ++i)
+        {
+            if (players[i].HasStateAuthority) return players[i];
+        }
+        return null;
+    }
+
+    public Player GetOppenetPlayer()
+    {
+        if (players[0] == null) return null;
+        for (int i = 0; i < players.Length; ++i)
+        {
+            if (!players[i].HasStateAuthority) return players[i];
+        }
+        return null;
+    }
+
+    public bool IsMyTurn()
+    {
+        return order.Get(current) == Runner.LocalPlayer.PlayerId;
     }
 }
