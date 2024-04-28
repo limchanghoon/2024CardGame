@@ -18,12 +18,14 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
     [Networked, OnChangedRender(nameof(OnTimerChanged))] public int timer { get; set; }
     [SerializeField] TextMeshProUGUI textMeshProUGUI;
     [SerializeField] Button btn_EndTurn;
+    [SerializeField] FieldCardTooltip fieldCardTooltip;
+    [SerializeField] LinePainter linePainter;
     [SerializeField] GameObject _cardPrefab;
 
     bool isReady = false;
     int readyCount = 0;
     [SerializeField] int current = -1;
-    [Networked, Capacity(2)] public NetworkArray<int> order { get; }
+    [Networked, Capacity(2)] NetworkArray<int> order { get; }
 
     Player[] players = new Player[2];
 
@@ -179,5 +181,25 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
     public bool IsMyTurn()
     {
         return order.Get(current) == Runner.LocalPlayer.PlayerId;
+    }
+
+    public void ShowFieldCardTooltip(CardMono cardMono, Vector3 _pos)
+    {
+        fieldCardTooltip.Show(cardMono, _pos);
+    }
+
+    public void DisalbeFieldCardTooltip()
+    {
+        fieldCardTooltip.Disable();
+    }
+
+    public void UpdateFieldCardTooltip()
+    {
+        fieldCardTooltip.UpdateText();
+    }
+
+    public void SetLineTarget(Vector3 p1, Vector3 p2, bool edgeOn, bool targetOn)
+    {
+        linePainter.Draw(p1, p2, edgeOn, targetOn);
     }
 }

@@ -10,11 +10,11 @@ public class Player : NetworkBehaviour
     public GameManager gameManager { get; set; }
 
     public GameObject _cardPrefab;
-    BasicSpawner basicSpawner;
     NetworkObject networkObject;
 
-    [Networked, Capacity(7), OnChangedRender(nameof(OnFieldChanged))] public NetworkArray<NetworkId> field { get; }
+    [Networked, Capacity(7), OnChangedRender(nameof(OnFieldChanged))] public NetworkLinkedList<NetworkId> field { get; }
     [Networked, Capacity(10), OnChangedRender(nameof(OnHandChanged))] public NetworkLinkedList<NetworkId> hand { get; }
+    [Networked, Capacity(60)] public NetworkLinkedList<NetworkId> cemetry { get; }
     [Networked, Capacity(50)] public NetworkLinkedList<NetworkId> deck { get; }
 
     [Networked, Capacity(50)] private NetworkDictionary<NetworkId, NetworkObject> cardDictionary_NetworkObject { get; }
@@ -27,11 +27,12 @@ public class Player : NetworkBehaviour
         networkObject = GetComponent<NetworkObject>();
     }
 
+
     private void Start()
     {
-        if (Object.HasStateAuthority) {
-            basicSpawner = GameObject.Find("BasicSpawner").GetComponent<BasicSpawner>();
-            Button button = basicSpawner.btn_Start.GetComponent<Button>();
+        if (Object.HasStateAuthority)
+        {
+            Button button = GameObject.Find("BasicSpawner").GetComponent<BasicSpawner>().btn_Start.GetComponent<Button>();
             button.onClick.RemoveAllListeners();
             button.onClick.AddListener(StartGame);
         }
@@ -39,19 +40,8 @@ public class Player : NetworkBehaviour
 
     public void StartGame()
     {
-        if (Runner.ActivePlayers.Count() < Runner.Config.Simulation.PlayerCount)
-        {
-            RPC_Debug("인원수 부족!");
-        }
-        else if (Runner.IsSceneAuthority)
-        {
-            RPC_Debug("게임 시작!");
+        if (Runner.ActivePlayers.Count() == Runner.Config.Simulation.PlayerCount && Runner.IsSceneAuthority)
             Runner.LoadScene(SceneRef.FromIndex(1), LoadSceneMode.Single);
-        }
-        else
-        {
-            RPC_Debug("방장이 아닙니다!");
-        }
     }
 
     public void AddToCardDictionary(NetworkId _networkId, NetworkObject networkObject)
@@ -79,50 +69,51 @@ public class Player : NetworkBehaviour
         Debug.Log(str);
     }
 
-    public int CountOfField()
-    {
-        int cnt = 0;
-        for (int i = 0; i < field.Length; ++i)
-        {
-            if (field[i] == default) continue;
-            cnt++;
-        }
-        return cnt;
-    }
-
-    public bool IsFieldFull()
-    {
-        for (int i = 0; i < field.Length; ++i)
-        {
-            if (field[i] == default) return false;
-        }
-        return true;
-    }
-
     public void SpawnCardOfHand(CardMono _cardMono)
     {
         NetworkId _uniqueID = _cardMono.uniqueID;
         hand.Remove(_uniqueID);
 
-        int findIndex = 0;
-        for (; findIndex < field.Length; ++findIndex)
-        {
-            if (field[findIndex] == default) break;
-        }
 
-        if (findIndex == field.Length)
+
+        if (field.Count == field.Capacity)
         {
             Debug.LogAssertion("필드 FULL");
             return;
         }
 
-        field.Set(findIndex, _uniqueID);
+        field.Add(_uniqueID);
         _cardMono.RPC_ChangeState(CardState.Field);
+
+        //
+        // 전투의 함성 발동해야함
+        //
+    }
+
+    public void DestroyCardOfField(CardMono _cardMono)
+    {
+        Debug.Log("DestroyCardOfField");
+        _cardMono.RPC_ChangeState(CardState.Cemetry);
+        NetworkId _uniqueID = _cardMono.uniqueID;
+
+        field.Remove(_uniqueID);
+
+        if (cemetry.Count == cemetry.Capacity) cemetry.Remove(cemetry.Get(0));
+        cemetry.Add(_uniqueID);
+
+        //
+        // 죽음의 메아리 발동해야함
+        //
     }
 
     public bool IsMyTurn()
     {
         return gameManager.IsMyTurn();
+    }
+
+    public void ShowFieldCardTooltip(CardMono cardMono)
+    {
+        gameManager.ShowFieldCardTooltip(cardMono, GetFieldPos(field.IndexOf(cardMono.uniqueID)));
     }
 
     public void OnHandChanged()
@@ -177,14 +168,17 @@ public class Player : NetworkBehaviour
         }
     }
 
-    public void OnFieldChanged()
+    private Vector3 GetFieldPos(int i)
     {
         float posY = networkObject.HasInputAuthority ? -1.5f : 1.55f;
+        return new Vector3(-6f + 2f * i, posY, 0f);
+    } 
 
-        for (int i = 0; i < field.Length; ++i)
+    public void OnFieldChanged()
+    {
+        for (int i = 0; i < field.Count; ++i)
         {
-            if (field[i] == default) continue;
-            GetCard(field[i]).SetPR(new Vector3(-6f + 2f * i, posY, 0f), Quaternion.identity, 1f);
+            GetCard(field[i]).SetPR(GetFieldPos(i), Quaternion.identity, 1f);
         }
     }
 }

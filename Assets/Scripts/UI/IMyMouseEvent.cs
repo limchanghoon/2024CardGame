@@ -6,5 +6,4 @@ public interface IMyMouseEvent
     void OnMyMouseDrag();
     void OnMyMouseUp();
     void OnIsZoomingChanged();
-    bool DraggingCardInMyHandArea();
 }

@@ -13,7 +13,7 @@ public class HandMouseEvent : IMyMouseEvent
         transform = _cardMono.transform;
     }
 
-    public bool DraggingCardInMyHandArea()
+    private bool DraggingCardInMyHandArea()
     {
         Vector3 _pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         _pos.z = -100f;
@@ -27,14 +27,30 @@ public class HandMouseEvent : IMyMouseEvent
     public void OnIsZoomingChanged()
     {
         if (cardMono.networkObject.HasInputAuthority) return;
-        if (cardMono.isZooming || cardMono.isDragging) cardMono.backFaceGlow.SetActive(true);
-        else cardMono.backFaceGlow.SetActive(false);
+        if (cardMono.isZooming || cardMono.isDragging) cardMono.GetBackFaceGlow().SetActive(true);
+        else cardMono.GetBackFaceGlow().SetActive(false);
     }
 
     public void OnMyMouseDown()
     {
         if (!cardMono.networkObject.HasInputAuthority) return;
         cardMono.isDragging = true;
+    }
+
+    public void OnMyMouseUp()
+    {
+        if (!cardMono.networkObject.HasInputAuthority) return;
+        if (!cardMono.isDragging) return;
+        cardMono.isDragging = false;
+
+        if (!cardMono.owner.IsMyTurn() || DraggingCardInMyHandArea() || cardMono.owner.field.Count == cardMono.owner.field.Capacity)
+        {
+            transform.DOMove(cardMono.originPos, 0.2f);
+        }
+        else
+        {
+            cardMono.owner.SpawnCardOfHand(cardMono);
+        }
     }
 
     public void OnMyMouseDrag()
@@ -81,21 +97,5 @@ public class HandMouseEvent : IMyMouseEvent
 
 
         transform.DORotateQuaternion(cardMono.originRot, 0.2f);
-    }
-
-    public void OnMyMouseUp()
-    {
-        if (!cardMono.networkObject.HasInputAuthority) return;
-        if (!cardMono.isDragging) return;
-        cardMono.isDragging = false;
-
-        if (!cardMono.IsMyTurn() || DraggingCardInMyHandArea() || cardMono.owner.IsFieldFull())
-        {
-            transform.DOMove(cardMono.originPos, 0.2f);
-        }
-        else
-        {
-            cardMono.owner.SpawnCardOfHand(cardMono);
-        }
     }
 }

@@ -12,7 +12,7 @@ public class RunnerHelper : MonoBehaviour, INetworkRunnerCallbacks
     [SerializeField] private NetworkPrefabRef _playerPrefab;
     private NetworkObject spawnedCharacter;
 
-    public BasicSpawner basicSpawner;
+    public BasicSpawner basicSpawner { get; set; }
 
 
     #region INetworkRunnerCallbacks콜백함수

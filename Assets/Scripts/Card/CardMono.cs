@@ -10,18 +10,22 @@ using System;
 public class CardMono : NetworkBehaviour
 {
     public NetworkObject networkObject;
-    [SerializeField] CardSO cardSO;
+    public CardSO cardSO {  get; private set; }
     [SerializeField] SpriteRenderer spriteRender;
     [SerializeField] TextMeshPro nameText;
     [SerializeField] TextMeshPro costText;
     [SerializeField] TextMeshPro powerText;
     [SerializeField] TextMeshPro healthText;
     [SerializeField] GameObject frontFace;
-    public GameObject backFace;
-    public GameObject backFaceGlow;
+    [SerializeField] GameObject backFace;
+    [SerializeField] GameObject fieldFace;
+    [SerializeField] GameObject backFaceGlow;
+
+    [SerializeField] TextMeshPro fieldPowerText;
+    [SerializeField] TextMeshPro fieldHealthText;
 
     [HideInInspector, Networked] public NetworkObject Target { get; set; }
-    [HideInInspector] public Player owner;
+    public Player owner { get; private set; }
     [Networked, OnChangedRender(nameof(OnIsZoomingChanged))] public bool isZooming { get; set; }
     [Networked, OnChangedRender(nameof(OnIsZoomingChanged))] public bool isDragging { get; set; }
 
@@ -37,6 +41,9 @@ public class CardMono : NetworkBehaviour
     HandMouseEvent handMouseEvent;
     FieldMouseEvent fieldMouseEvent;
 
+    public int currentPower {  get; set; }
+    public int currentHealth {  get; set; }
+
     public override void Spawned()
     {
         networkObject = GetComponent<NetworkObject>();
@@ -46,16 +53,14 @@ public class CardMono : NetworkBehaviour
         if (op.Result != null)
         {
             cardSO = _data;
+            SetAsSO();
         }
 
         owner = Target.GetComponent<Player>();
 
-        if (networkObject.HasInputAuthority)
-        {
-            handMouseEvent = new HandMouseEvent(this);
-            fieldMouseEvent = new FieldMouseEvent(this);
-            currentMouseEvent = handMouseEvent;
-        }
+        handMouseEvent = new HandMouseEvent(this);
+        fieldMouseEvent = new FieldMouseEvent(this);
+        currentMouseEvent = handMouseEvent;
 
         nameText.text = cardSO.cardName;
         costText.text = cardSO.cost.ToString();
@@ -109,12 +114,6 @@ public class CardMono : NetworkBehaviour
         currentMouseEvent.OnIsZoomingChanged();
     }
 
-    private bool DraggingCardInMyHandArea()
-    {
-        if (currentMouseEvent == null) return false;
-        return currentMouseEvent.DraggingCardInMyHandArea();
-    }
-
     [Rpc(RpcSources.All, RpcTargets.All)]
     public void RPC_ChangeState(CardState cardState)
     {
@@ -125,15 +124,24 @@ public class CardMono : NetworkBehaviour
 
                 frontFace.SetActive(networkObject.HasInputAuthority);
                 backFace.SetActive(!networkObject.HasInputAuthority);
-
+                fieldFace.SetActive(false);
+                gameObject.layer = LayerMask.NameToLayer("HandCard");
                 break;
             case CardState.Field:
                 currentMouseEvent = fieldMouseEvent;
 
-                frontFace.SetActive(true);
+                UpdateFieldText();
+                frontFace.SetActive(false);
                 backFace.SetActive(false);
+                fieldFace.SetActive(true);
+                gameObject.layer = LayerMask.NameToLayer("FieldCard");
                 break;
             case CardState.Cemetry:
+                currentMouseEvent = null;
+
+                // 임시
+                transform.position = networkObject.HasInputAuthority ? new Vector3(11f, -2.5f, 0f) : new Vector3(11f, 2.5f, 0f);
+
                 break;
             default:
                 Debug.LogAssertion("CardState 이상한 것 들어옴!! : " + cardState.ToString());
@@ -141,6 +149,18 @@ public class CardMono : NetworkBehaviour
         }
     }
 
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    public void RPC_Hit(int damage)
+    {
+        currentHealth -= damage;
+        UpdateFieldText();
+        if (currentHealth <= 0 && networkObject.HasInputAuthority)
+        {
+            Debug.Log("죽었어!!");
+            owner.DestroyCardOfField(this);
+            owner.gameManager.UpdateFieldCardTooltip();
+        }
+    }
 
     public void SetPR(Vector3 des, Quaternion rot, float _t)
     {
@@ -151,8 +171,20 @@ public class CardMono : NetworkBehaviour
         originRot = rot;
     }
 
-    public bool IsMyTurn()
+    public GameObject GetBackFaceGlow()
     {
-        return owner.IsMyTurn();
+        return backFaceGlow;
+    }
+
+    public void UpdateFieldText()
+    {
+        fieldPowerText.text = currentPower.ToString();
+        fieldHealthText.text = currentHealth.ToString();
+    }
+
+    public void SetAsSO()
+    {
+        currentPower = cardSO.power;
+        currentHealth = cardSO.health;
     }
 }
