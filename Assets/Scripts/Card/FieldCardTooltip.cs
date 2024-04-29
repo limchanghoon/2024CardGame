@@ -1,5 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 
@@ -18,11 +17,11 @@ public class FieldCardTooltip : MonoBehaviour
         _pos.z = -100f;
         if (Camera.main.WorldToViewportPoint(_pos).x < 0.5f)
         {
-            transform.position = _pos + Vector3.right * 3f;
+            transform.DOMove(_pos + Vector3.right * 3f, 0);
         }
         else
         {
-            transform.position = _pos + Vector3.left * 3f;
+            transform.DOMove(_pos + Vector3.left * 3f, 0);
         }
 
         UpdateText();
@@ -33,11 +32,12 @@ public class FieldCardTooltip : MonoBehaviour
     public void Disable()
     {
         gameObject.SetActive(false);
+        current = null;
     }
 
     public void UpdateText()
     {
-        if(current.currentHealth <= 0)
+        if(current ==null || current.currentHealth <= 0)
         {
             Disable();
             return;

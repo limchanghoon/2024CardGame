@@ -5,7 +5,7 @@ using DG.Tweening;
 using Fusion;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
-using System;
+using System.ComponentModel;
 
 public class CardMono : NetworkBehaviour
 {
@@ -57,6 +57,7 @@ public class CardMono : NetworkBehaviour
         }
 
         owner = Target.GetComponent<Player>();
+        owner.AddToCardDictionary(uniqueID, this);
 
         handMouseEvent = new HandMouseEvent(this);
         fieldMouseEvent = new FieldMouseEvent(this);
@@ -67,7 +68,7 @@ public class CardMono : NetworkBehaviour
         powerText.text = cardSO.power.ToString();
         healthText.text = cardSO.health.ToString();
 
-        transform.position = networkObject.HasInputAuthority ? new Vector3(11f, -2.5f, 0f) : new Vector3(11f, 2.5f, 0f);
+        transform.DOMove(networkObject.HasInputAuthority ? new Vector3(11f, -2.5f, 0f) : new Vector3(11f, 2.5f, 0f), 0);
         frontFace.SetActive(networkObject.HasInputAuthority);
         backFace.SetActive(!networkObject.HasInputAuthority);
     }
@@ -117,7 +118,7 @@ public class CardMono : NetworkBehaviour
     [Rpc(RpcSources.All, RpcTargets.All)]
     public void RPC_ChangeState(CardState cardState)
     {
-        switch(cardState)
+        switch (cardState)
         {
             case CardState.Hand:
                 currentMouseEvent = handMouseEvent;
@@ -139,8 +140,7 @@ public class CardMono : NetworkBehaviour
             case CardState.Cemetry:
                 currentMouseEvent = null;
 
-                // 임시
-                transform.position = networkObject.HasInputAuthority ? new Vector3(11f, -2.5f, 0f) : new Vector3(11f, 2.5f, 0f);
+                Debug.Log("CardState.Cemetry : " + cardSO.cardName);
 
                 break;
             default:
@@ -149,17 +149,46 @@ public class CardMono : NetworkBehaviour
         }
     }
 
-    [Rpc(RpcSources.All, RpcTargets.All)]
-    public void RPC_Hit(int damage)
+    public int Hit(int damage)
     {
         currentHealth -= damage;
+        return damage;
+    }
+
+    public void UpdateHit(int damage)
+    {
+        owner.gameManager.GenerateHitText(damage, transform.position);
         UpdateFieldText();
-        if (currentHealth <= 0 && networkObject.HasInputAuthority)
+        if (currentHealth <= 0)
         {
-            Debug.Log("죽었어!!");
-            owner.DestroyCardOfField(this);
-            owner.gameManager.UpdateFieldCardTooltip();
+            if (networkObject.HasInputAuthority)
+                owner.DestroyCardOfField(this);
+            transform.DOShakePosition(0.5f, 0.5f).SetDelay(0.1f).OnComplete(Die);
         }
+    }
+
+    private void Die()
+    {
+        //임시
+        owner.gameManager.effectManager.DoHitEffect(transform.position);
+        transform.DOMove(networkObject.HasInputAuthority ? new Vector3(11f, -2.5f, 0f) : new Vector3(11f, 2.5f, 0f), 0);
+        owner.gameManager.UpdateFieldCardTooltip();
+    }
+
+
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    public void RPC_Attack(NetworkId _uniqueID)
+    {
+        CardMono _target = owner.gameManager.GetCard(_uniqueID);
+
+        int opponentHit = _target.Hit(currentPower);
+        int myHit = Hit(_target.currentPower);
+
+        Vector3 _origin = transform.position;
+
+        DOTween.Sequence().Append(transform.DOMove(_target.transform.position, 0.2f).SetEase(Ease.OutCirc))
+            .Append(transform.DOMove(_origin, 0.1f))
+            .OnComplete(() => { _target.UpdateHit(opponentHit); UpdateHit(myHit); });
     }
 
     public void SetPR(Vector3 des, Quaternion rot, float _t)

@@ -29,6 +29,9 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
 
     Player[] players = new Player[2];
 
+    [SerializeField] private MyObjectPool hitObjectPool;
+    public EffectManager effectManager;
+
     public void AfterSpawned()
     {
         if (Runner.SceneManager.MainRunnerScene.buildIndex == 0) return;
@@ -54,6 +57,7 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
             RPC_CheckPlayers();
             yield return new WaitForSeconds(1f);
         }
+        RPC_SettingAfterAllPlayerSpawned();
         RPC_StartGame();
     }
 
@@ -87,12 +91,12 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
     }
 
     [Rpc(RpcSources.All, RpcTargets.All)]
-    public void RPC_StartGame()
+    private void RPC_SettingAfterAllPlayerSpawned()
     {
         var _players = GameObject.FindGameObjectsWithTag("Player");
-        int p1 = _players[0].GetComponent<NetworkObject>().Runner.LocalPlayer.PlayerId;
-        int p2 = _players[1].GetComponent<NetworkObject>().Runner.LocalPlayer.PlayerId;
-        if(p1 == order[0])
+        int p0 = _players[0].GetComponent<NetworkObject>().Runner.LocalPlayer.PlayerId;
+        int p1 = _players[1].GetComponent<NetworkObject>().Runner.LocalPlayer.PlayerId;
+        if (p0 == order[0])
         {
             players[0] = _players[0].GetComponent<Player>();
             players[1] = _players[1].GetComponent<Player>();
@@ -102,9 +106,18 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
             players[0] = _players[1].GetComponent<Player>();
             players[1] = _players[0].GetComponent<Player>();
         }
+    }
 
-        players[0].gameManager = this;
-        players[1].gameManager = this;
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    private void RPC_StartGame()
+    {
+        for (int i = 0; i < 3; ++i)
+        {
+            DrawCard(0);
+            DrawCard(1);
+        }
+        DrawCard(1);
+
         if (!networkObject.HasStateAuthority) return;
 
         RPC_TurnNext(0);
@@ -112,6 +125,9 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
     
     [Rpc(RpcSources.All, RpcTargets.All)]
     public void RPC_Debug(string str) => Debug.Log(str);
+
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    public void RPC_DrawCard(int turn_) => DrawCard(turn_);
 
     // turn_에 해당하는 플레이어만 수행함
     public void DrawCard(int turn_)
@@ -152,6 +168,17 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
     */
 
     public void TurnNext() => RPC_TurnNext(1 - current);
+
+    public CardMono GetCard(NetworkId _networkId)
+    {
+        CardMono result = players[0].GetMyCard(_networkId);
+        if(result == null)
+        {
+            result = players[1].GetMyCard(_networkId);
+        }
+        return result;
+    }
+
 
     public void OnTimerChanged()
     {
@@ -201,5 +228,10 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
     public void SetLineTarget(Vector3 p1, Vector3 p2, bool edgeOn, bool targetOn)
     {
         linePainter.Draw(p1, p2, edgeOn, targetOn);
+    }
+
+    public void GenerateHitText(int damage, Vector3 _pos)
+    {
+        hitObjectPool.CreateOjbect().GetComponent<PoolingHit>().Set(damage, _pos);
     }
 }

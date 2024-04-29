@@ -171,7 +171,6 @@ public class RunnerHelper : MonoBehaviour, INetworkRunnerCallbacks
                     cardMono.uniqueID = _obj.Id;
                     cardMono.cardID = loadedData.cardIDs[i];
                     cardMono.Target = spawnedCharacter;
-                    player.AddToCardDictionary(_obj.Id, _obj);
                     player.deck.Add(_obj.Id);
                 });
             }

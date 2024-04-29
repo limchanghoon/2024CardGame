@@ -20,9 +20,15 @@ public class FieldMouseEvent : IMyMouseEvent
         hit = Physics2D.Raycast(ray.origin, ray.direction, Mathf.Infinity);
         int layer = LayerMask.NameToLayer("FieldCard");
         // юс╫ц
-        bool targetOn = hit.collider != null && hit.collider.gameObject.layer == layer && !hit.collider.GetComponent<CardMono>().networkObject.HasInputAuthority;
-
-        return targetOn;
+        if (hit.collider != null && hit.collider.gameObject.layer == layer && cardMono.owner.gameManager.IsMyTurn())
+        {
+            CardMono _target = hit.collider.GetComponent<CardMono>();
+            if (!_target.networkObject.HasInputAuthority && _target.currentHealth > 0)
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void OnIsZoomingChanged()
@@ -49,8 +55,7 @@ public class FieldMouseEvent : IMyMouseEvent
         {
             cardMono.owner.gameManager.DisalbeFieldCardTooltip();
             CardMono targetCard = hit.collider.gameObject.GetComponent<CardMono>();
-            targetCard.RPC_Hit(cardMono.currentPower);
-            cardMono.RPC_Hit(targetCard.currentPower);
+            cardMono.RPC_Attack(targetCard.uniqueID);
         }
     }
 

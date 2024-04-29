@@ -1,5 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 
@@ -19,21 +18,21 @@ public class DeckMono : MonoBehaviour
             if (player == null) player = gameManager.GetMyPlayer();
             if (player == null) return;
 
-            textBoxTr.position = new Vector3(6f, -2.5f, -200f);
+            deckCountText.text = $"남은 나의 덱 {player.deck.Count}장";
+            textBoxTr.DOMove(new Vector3(6f, -2.5f, -200f), 0);
         }
         else
         {
             if (player == null) player = gameManager.GetOppenetPlayer();
             if (player == null) return;
 
-            textBoxTr.position = new Vector3(6f, 2.5f, -200f);
+            deckCountText.text = $"남은 상대의 덱 {player.deck.Count}장";
+            textBoxTr.DOMove(new Vector3(6f, 2.5f, -200f), 0);
         }
-
-        deckCountText.text = $"남은 상대의 덱 {player.deck.Count}장";
     }
 
     private void OnMouseExit()
     {
-        textBoxTr.position = new Vector3(9999f, 9999f, 9999f);
+        textBoxTr.DOMove(new Vector3(9999f, 9999f, 9999f), 0);
     }
 }

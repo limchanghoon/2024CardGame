@@ -7,7 +7,15 @@ using UnityEngine.UI;
 
 public class Player : NetworkBehaviour
 {
-    public GameManager gameManager { get; set; }
+    private GameManager _gameManager;
+    public GameManager gameManager {
+        get
+        {
+            if (_gameManager == null)
+                _gameManager = GameObject.FindGameObjectWithTag("GameManager").GetComponent<GameManager>();
+            return _gameManager;
+        }
+    }
 
     public GameObject _cardPrefab;
     NetworkObject networkObject;
@@ -16,10 +24,7 @@ public class Player : NetworkBehaviour
     [Networked, Capacity(10), OnChangedRender(nameof(OnHandChanged))] public NetworkLinkedList<NetworkId> hand { get; }
     [Networked, Capacity(60)] public NetworkLinkedList<NetworkId> cemetry { get; }
     [Networked, Capacity(50)] public NetworkLinkedList<NetworkId> deck { get; }
-
-    [Networked, Capacity(50)] private NetworkDictionary<NetworkId, NetworkObject> cardDictionary_NetworkObject { get; }
     private Dictionary<NetworkId, CardMono> cardDictionary = new Dictionary<NetworkId, CardMono>();
-
 
     private void Awake()
     {
@@ -34,32 +39,16 @@ public class Player : NetworkBehaviour
         {
             Button button = GameObject.Find("BasicSpawner").GetComponent<BasicSpawner>().btn_Start.GetComponent<Button>();
             button.onClick.RemoveAllListeners();
-            button.onClick.AddListener(StartGame);
+            button.onClick.AddListener(() => { StartGame(button); });
         }
     }
 
-    public void StartGame()
+    public void StartGame(Button button)
     {
         if (Runner.ActivePlayers.Count() == Runner.Config.Simulation.PlayerCount && Runner.IsSceneAuthority)
+        {
             Runner.LoadScene(SceneRef.FromIndex(1), LoadSceneMode.Single);
-    }
-
-    public void AddToCardDictionary(NetworkId _networkId, NetworkObject networkObject)
-    {
-        cardDictionary_NetworkObject.Add(_networkId, networkObject);
-    }
-
-    private CardMono GetCard(NetworkId _networkId)
-    {
-        CardMono cardMono;
-        if (cardDictionary.TryGetValue(_networkId, out cardMono))
-        {
-            return cardMono;
-        }
-        else
-        {
-            cardDictionary.Add(_networkId, cardDictionary_NetworkObject[_networkId].GetComponent<CardMono>());
-            return cardDictionary[_networkId];
+            button.interactable = false;
         }
     }
 
@@ -69,12 +58,10 @@ public class Player : NetworkBehaviour
         Debug.Log(str);
     }
 
-    public void SpawnCardOfHand(CardMono _cardMono)
+    public void SpawnCardOfHand(CardMono _cardMono, int _location)
     {
         NetworkId _uniqueID = _cardMono.uniqueID;
         hand.Remove(_uniqueID);
-
-
 
         if (field.Count == field.Capacity)
         {
@@ -82,8 +69,24 @@ public class Player : NetworkBehaviour
             return;
         }
 
-        field.Add(_uniqueID);
+        if (field.Count == 0)
+        {
+            field.Add(_uniqueID);
+        }
+        else
+        {
+            NetworkId _temp = field[field.Count - 1];
+            for (int i = field.Count - 1; i > _location; i--)
+            {
+                field.Set(i, field[i - 1]);
+            }
+            field.Add(_temp);
+            field.Set(_location, _uniqueID);
+        }
+
         _cardMono.RPC_ChangeState(CardState.Field);
+
+
 
         //
         // 전투의 함성 발동해야함
@@ -92,7 +95,6 @@ public class Player : NetworkBehaviour
 
     public void DestroyCardOfField(CardMono _cardMono)
     {
-        Debug.Log("DestroyCardOfField");
         _cardMono.RPC_ChangeState(CardState.Cemetry);
         NetworkId _uniqueID = _cardMono.uniqueID;
 
@@ -113,7 +115,20 @@ public class Player : NetworkBehaviour
 
     public void ShowFieldCardTooltip(CardMono cardMono)
     {
-        gameManager.ShowFieldCardTooltip(cardMono, GetFieldPos(field.IndexOf(cardMono.uniqueID)));
+        //gameManager.ShowFieldCardTooltip(cardMono, GetFieldPos(field.IndexOf(cardMono.uniqueID)));
+        gameManager.ShowFieldCardTooltip(cardMono, cardMono.transform.position);
+    }
+
+    public void AddToCardDictionary(NetworkId _networkId, CardMono _cardMono)
+    {
+        if (!cardDictionary.ContainsKey(_networkId))
+            cardDictionary.Add(_networkId, _cardMono);
+    }
+
+    public CardMono GetMyCard(NetworkId _networkId)
+    {
+        cardDictionary.TryGetValue(_networkId, out var result);
+        return result;
     }
 
     public void OnHandChanged()
@@ -127,18 +142,18 @@ public class Player : NetworkBehaviour
         }
         else if (count == 1)
         {
-            GetCard(hand[0]).SetPR(new Vector3(0f, posY, 0f), Quaternion.identity, 1f);
+            gameManager.GetCard(hand[0]).SetPR(new Vector3(0f, posY, 0f), Quaternion.identity, 1f);
         }
         else if (count == 2)
         {
-            GetCard(hand[0]).SetPR(new Vector3(-0.5f, posY, 0f), Quaternion.identity, 1f);
-            GetCard(hand[1]).SetPR(new Vector3(0.5f, posY, -1f), Quaternion.identity, 1f);
+            gameManager.GetCard(hand[0]).SetPR(new Vector3(-0.5f, posY, 0f), Quaternion.identity, 1f);
+            gameManager.GetCard(hand[1]).SetPR(new Vector3(0.5f, posY, -1f), Quaternion.identity, 1f);
         }
         else if (count == 3)
         {
-            GetCard(hand[0]).SetPR(new Vector3(-1f, posY, 0f), Quaternion.identity, 1f);
-            GetCard(hand[1]).SetPR(new Vector3(0f, posY, -1f), Quaternion.identity, 1f);
-            GetCard(hand[2]).SetPR(new Vector3(1f, posY, -2f), Quaternion.identity, 1f);
+            gameManager.GetCard(hand[0]).SetPR(new Vector3(-1f, posY, 0f), Quaternion.identity, 1f);
+            gameManager.GetCard(hand[1]).SetPR(new Vector3(0f, posY, -1f), Quaternion.identity, 1f);
+            gameManager.GetCard(hand[2]).SetPR(new Vector3(1f, posY, -2f), Quaternion.identity, 1f);
         }
         else
         {
@@ -162,23 +177,30 @@ public class Player : NetworkBehaviour
                 float curve = Mathf.Sin(t * Mathf.PI) * 0.4f;
                 if (!networkObject.HasInputAuthority)
                     curve *= -1;
-                GetCard(hand[i]).SetPR(Vector3.Lerp(startPos, endPos, t) + Vector3.up * curve, Quaternion.Lerp(startRot, endRot, t), 1f);
+                gameManager.GetCard(hand[i]).SetPR(Vector3.Lerp(startPos, endPos, t) + Vector3.up * curve, Quaternion.Lerp(startRot, endRot, t), 1f);
                 t += interval;
             }
         }
     }
 
-    private Vector3 GetFieldPos(int i)
+    // 1=> -0
+    // 2=> -1 +1
+    // 3=> -2 -0 +2
+    // 4=> -3 -1 +1 +3
+    // 5=> -4 -2 -0 +2 +4
+    public Vector3 GetFieldPos(int i, int cnt = -1)
     {
-        float posY = networkObject.HasInputAuthority ? -1.5f : 1.55f;
-        return new Vector3(-6f + 2f * i, posY, 0f);
+        if (cnt < 0)
+            cnt = field.Count;
+        float posY = networkObject.HasInputAuthority ? -1.5f : 1.5f;
+        return new Vector3(1 - cnt + 2 * i, posY, 0f);
     } 
 
     public void OnFieldChanged()
     {
         for (int i = 0; i < field.Count; ++i)
         {
-            GetCard(field[i]).SetPR(GetFieldPos(i), Quaternion.identity, 1f);
+            gameManager.GetCard(field[i]).SetPR(GetFieldPos(i, field.Count), Quaternion.identity, 1f);
         }
     }
 }
