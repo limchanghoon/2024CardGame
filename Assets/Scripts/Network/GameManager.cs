@@ -1,8 +1,10 @@
+using DG.Tweening;
 using Fusion;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Xml;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,7 +16,6 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
     // Runner.IsSceneAuthority : 마스터
 
     NetworkObject networkObject;
-    [Networked] public TickTimer StartTimer { get; set; }
     [Networked, OnChangedRender(nameof(OnTimerChanged))] public int timer { get; set; }
     [SerializeField] TextMeshProUGUI textMeshProUGUI;
     [SerializeField] Button btn_EndTurn;
@@ -28,6 +29,7 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
     [Networked, Capacity(2)] NetworkArray<int> order { get; }
 
     Player[] players = new Player[2];
+    [HideInInspector] public HeroMono[] heroMonos = new HeroMono[2];
 
     [SerializeField] private MyObjectPool hitObjectPool;
     public EffectManager effectManager;
@@ -100,12 +102,26 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
         {
             players[0] = _players[0].GetComponent<Player>();
             players[1] = _players[1].GetComponent<Player>();
+
+            heroMonos[0] = _players[0].GetComponent<HeroMono>();
+            heroMonos[1] = _players[1].GetComponent<HeroMono>();
         }
         else
         {
             players[0] = _players[1].GetComponent<Player>();
             players[1] = _players[0].GetComponent<Player>();
+
+            heroMonos[0] = _players[1].GetComponent<HeroMono>();
+            heroMonos[1] = _players[0].GetComponent<HeroMono>();
         }
+
+        players[0].OnHandChanged();
+        players[0].OnFieldChanged();
+        players[1].OnHandChanged();
+        players[1].OnFieldChanged();
+
+        heroMonos[0].transform.DOMove(heroMonos[0].HasInputAuthority ? new Vector3(0, -2.5f, 1) : new Vector3(0, 2.5f, 1), 1f);
+        heroMonos[1].transform.DOMove(heroMonos[1].HasInputAuthority ? new Vector3(0, -2.5f, 1) : new Vector3(0, 2.5f, 1), 1f);
     }
 
     [Rpc(RpcSources.All, RpcTargets.All)]
@@ -153,20 +169,6 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
         curPlayer.deck.Remove(temp);
     }
 
-    /*
-    public override void FixedUpdateNetwork()
-    {
-        if (StartTimer.Expired(Runner))
-        {
-            //Runner.Despawn(Object);
-        }
-        else if(timer >= StartTimer.RemainingTime(Runner))
-        {
-            timer = (int)StartTimer.RemainingTime(Runner);
-        }
-    }
-    */
-
     public void TurnNext() => RPC_TurnNext(1 - current);
 
     public CardMono GetCard(NetworkId _networkId)
@@ -176,9 +178,30 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
         {
             result = players[1].GetMyCard(_networkId);
         }
+        // 먼가 문제가 생겨서 카드가 등록이 안됨!
+        if(result == null)
+        {
+            var objs = GameObject.FindGameObjectsWithTag("Card");
+            foreach (var obj in objs)
+            {
+                CardMono _cardMono = obj.GetComponent<CardMono>();
+                _cardMono.owner.AddToCardDictionary(_cardMono.uniqueID, _cardMono);
+                if (_networkId == _cardMono.uniqueID) result = _cardMono;
+            }
+        }
         return result;
     }
 
+    public GameObject GetNetworkObject(NetworkId _networkId)
+    {
+        GameObject result = GetCard(_networkId)?.gameObject;
+        if(result == null)
+        {
+            if (players[0].networkObject.Id == _networkId) result = heroMonos[0].gameObject;
+            if (players[1].networkObject.Id == _networkId) result = heroMonos[1].gameObject;
+        }
+        return result;
+    }
 
     public void OnTimerChanged()
     {
@@ -205,6 +228,39 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
         return null;
     }
 
+    public Player GetCardOwner(CardMono _cardMono)
+    {
+        NetworkId _networkId = _cardMono.uniqueID;
+        if (players[0].GetMyCard(_networkId) != null)
+            return players[0];
+        else
+            return players[1];
+    }
+
+    public HeroMono GetMyHereMono()
+    {
+        for (int i = 0; i < players.Length; ++i)
+        {
+            if (players[i].HasStateAuthority) return heroMonos[i];
+        }
+        return null;
+    }
+
+    public HeroMono GetOpponentHereMono()
+    {
+        for (int i = 0; i < players.Length; ++i)
+        {
+            if (!players[i].HasStateAuthority) return heroMonos[i];
+        }
+        return null;
+    }
+
+    public int GetPlayerOrder(Player player)
+    {
+        if (order[0] == player.Runner.LocalPlayer.PlayerId) return 0;
+        else return 1;
+    }
+
     public bool IsMyTurn()
     {
         return order.Get(current) == Runner.LocalPlayer.PlayerId;
@@ -222,7 +278,7 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
 
     public void UpdateFieldCardTooltip()
     {
-        fieldCardTooltip.UpdateText();
+        fieldCardTooltip.UpdateUI();
     }
 
     public void SetLineTarget(Vector3 p1, Vector3 p2, bool edgeOn, bool targetOn)
@@ -233,5 +289,18 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
     public void GenerateHitText(int damage, Vector3 _pos)
     {
         hitObjectPool.CreateOjbect().GetComponent<PoolingHit>().Set(damage, _pos);
+    }
+
+    [ContextMenu("UPDATEUPDATE")]
+    public void UPDATEUPDATE()
+    {
+        RPC_UPDATEUPDATE();
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    public void RPC_UPDATEUPDATE()
+    {
+        players[0].OnFieldChanged();
+        players[1].OnFieldChanged();
     }
 }

@@ -1,5 +1,9 @@
 using DG.Tweening;
+using Fusion;
 using System;
+using System.Collections;
+using Unity.Burst.CompilerServices;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class HandMouseEvent : IMyMouseEvent
@@ -68,6 +72,60 @@ public class HandMouseEvent : IMyMouseEvent
         return Array.Exists(hits, x => x.collider.gameObject.layer == layer);
     }
 
+    private void GoBack()
+    {
+        transform.DOMove(cardMono.originPos, 0.2f);
+        expectedLocation = -2;
+        cardMono.owner.OnFieldChanged();
+        cardMono.owner.OnHandChanged();
+    }
+
+    private bool IsTargetOn(out RaycastHit2D hit)
+    {
+        Vector3 _pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        _pos.z = -100f;
+        Ray2D ray = new Ray2D(_pos, Vector2.zero);
+        hit = Physics2D.Raycast(ray.origin, ray.direction, Mathf.Infinity);
+        int layer = LayerMask.NameToLayer("Targetable");
+        // юс╫ц
+        if (hit.collider != null && hit.collider.gameObject.layer == layer && cardMono.owner.IsMyTurn())
+        {
+            var _ITargetable = hit.collider.GetComponent<ITargetable>();
+            if (((_ITargetable.GetTargetType() & cardMono.cardSO.battleCryTarget) != 0) && _ITargetable.CanBeTarget())
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private IEnumerator SelectTargetCoroutine()
+    {
+        cardMono.SetPR(cardMono.owner.GetFieldPos(expectedLocation, cardMono.owner.field.Count + 1), Quaternion.identity, 1f);
+        while (true)
+        {
+            yield return null;
+            RaycastHit2D hit;
+            bool _isTargetOn = IsTargetOn(out hit);
+            cardMono.owner.gameManager.SetLineTarget(cardMono.gameObject.transform.position, Camera.main.ScreenToWorldPoint(Input.mousePosition), true, _isTargetOn);
+            if (!cardMono.owner.IsMyTurn())
+            {
+                GoBack();
+                break;
+            }
+            if(Input.GetMouseButtonDown(0))
+            {
+                if (_isTargetOn)
+                    cardMono.owner.SpawnCardOfHand(cardMono.uniqueID, expectedLocation, hit.collider.GetComponent<ITargetable>().GetNetworkId());
+                else
+                    GoBack();
+                break;
+            }
+        }
+        cardMono.isDragging = false;
+        cardMono.owner.gameManager.SetLineTarget(Vector3.zero, Vector3.zero, false, false);
+    }
+
     public void OnIsZoomingChanged()
     {
         if (cardMono.networkObject.HasInputAuthority) return;
@@ -85,17 +143,29 @@ public class HandMouseEvent : IMyMouseEvent
     {
         if (!cardMono.networkObject.HasInputAuthority) return;
         if (!cardMono.isDragging) return;
-        cardMono.isDragging = false;
 
         if (!cardMono.owner.IsMyTurn() || DraggingCardInMyHandArea() || cardMono.owner.field.Count == cardMono.owner.field.Capacity)
         {
-            transform.DOMove(cardMono.originPos, 0.2f);
-            expectedLocation = -2;
-            cardMono.owner.OnFieldChanged();
+            GoBack();
+            cardMono.isDragging = false;
         }
         else
         {
-            cardMono.owner.SpawnCardOfHand(cardMono, expectedLocation);
+            if (cardMono.battleCry != null && cardMono.battleCry.IsNeedTarget())
+            {
+                if (cardMono.cardSO.IsTargetExist(cardMono.owner.gameManager))
+                    cardMono.StartCoroutine(SelectTargetCoroutine());
+                else
+                {
+                    cardMono.owner.SpawnCardOfHand(cardMono.uniqueID, expectedLocation);
+                    cardMono.isDragging = false;
+                }
+            }
+            else
+            {
+                cardMono.owner.SpawnCardOfHand(cardMono.uniqueID, expectedLocation);
+                cardMono.isDragging = false;
+            }
         }
     }
 

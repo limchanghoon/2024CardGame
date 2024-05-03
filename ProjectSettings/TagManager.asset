@@ -5,6 +5,8 @@ TagManager:
   serializedVersion: 2
   tags:
   - GameManager
+  - FxTemporaire
+  - Card
   layers:
   - Default
   - TransparentFX
@@ -18,8 +20,8 @@ TagManager:
   - 
   - MyHandArea
   - HandCard
-  - FieldCard
   - 
+  - Targetable
   - 
   - 
   - 

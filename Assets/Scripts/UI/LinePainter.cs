@@ -14,8 +14,8 @@ public class LinePainter : MonoBehaviour
 
     public void Draw(Vector3 p1, Vector3 p2, bool edgeOn, bool targetOn)
     {
-        p1.z = -100f;
-        p2.z = -100f;
+        p1.z = -400f;
+        p2.z = -400f;
         lineRenderer.SetPosition(0, p1);
         lineRenderer.SetPosition(1, p2);
         lineEdge.transform.position = p2;
@@ -25,6 +25,4 @@ public class LinePainter : MonoBehaviour
         lineEdge.SetActive(edgeOn);
         doubleCircle.SetActive(targetOn);
     }
-
-
 }

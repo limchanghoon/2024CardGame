@@ -161,7 +161,6 @@ public class RunnerHelper : MonoBehaviour, INetworkRunnerCallbacks
             string loadedJson = File.ReadAllText(path);
             var loadedData = JsonUtility.FromJson<DeckData>(loadedJson);
             loadedData.Shuffle();
-
             Player player = spawnedCharacter.GetComponent<Player>();
             for (int i = 0; i < 30; ++i)
             {

@@ -1,3 +1,4 @@
+using DG.Tweening;
 using Fusion;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,9 +19,10 @@ public class Player : NetworkBehaviour
     }
 
     public GameObject _cardPrefab;
-    NetworkObject networkObject;
+    public NetworkObject networkObject { get; private set; }
 
     [Networked, Capacity(7), OnChangedRender(nameof(OnFieldChanged))] public NetworkLinkedList<NetworkId> field { get; }
+    //public List<NetworkId> field = new List<NetworkId>(7);
     [Networked, Capacity(10), OnChangedRender(nameof(OnHandChanged))] public NetworkLinkedList<NetworkId> hand { get; }
     [Networked, Capacity(60)] public NetworkLinkedList<NetworkId> cemetry { get; }
     [Networked, Capacity(50)] public NetworkLinkedList<NetworkId> deck { get; }
@@ -58,17 +60,31 @@ public class Player : NetworkBehaviour
         Debug.Log(str);
     }
 
-    public void SpawnCardOfHand(CardMono _cardMono, int _location)
+    public void DrawMyCard()
     {
-        NetworkId _uniqueID = _cardMono.uniqueID;
-        hand.Remove(_uniqueID);
+        gameManager.DrawCard(gameManager.GetPlayerOrder(this));
+    }
+
+    public void SpawnCardOfHand(NetworkId _uniqueID, int _location, NetworkId _target = default)
+    {
+        if (Object.HasStateAuthority)
+            hand.Remove(_uniqueID);
 
         if (field.Count == field.Capacity)
         {
             Debug.LogAssertion("필드 FULL");
             return;
         }
-
+        /*
+        if (_location < field.Count)
+        {
+            field.Insert(_location, _uniqueID);
+        }
+        else
+        {
+            field.Add(_uniqueID);
+        }
+        */
         if (field.Count == 0)
         {
             field.Add(_uniqueID);
@@ -84,18 +100,17 @@ public class Player : NetworkBehaviour
             field.Set(_location, _uniqueID);
         }
 
-        _cardMono.RPC_ChangeState(CardState.Field);
 
+        CardMono _cardMono = gameManager.GetCard(_uniqueID);
+        _cardMono.RPC_ChangeCardState(CardState.Field);
 
-
-        //
-        // 전투의 함성 발동해야함
-        //
+        // 전투의 함성
+        if (_cardMono.battleCry != null)
+            _cardMono.BattleCry(_target);
     }
 
     public void DestroyCardOfField(CardMono _cardMono)
     {
-        _cardMono.RPC_ChangeState(CardState.Cemetry);
         NetworkId _uniqueID = _cardMono.uniqueID;
 
         field.Remove(_uniqueID);
@@ -103,9 +118,11 @@ public class Player : NetworkBehaviour
         if (cemetry.Count == cemetry.Capacity) cemetry.Remove(cemetry.Get(0));
         cemetry.Add(_uniqueID);
 
-        //
+        _cardMono.RPC_ChangeCardState(CardState.Cemetry);
+
         // 죽음의 메아리 발동해야함
-        //
+        if (_cardMono.deathRattle != null)
+            _cardMono.DeathRattle();
     }
 
     public bool IsMyTurn()
@@ -133,7 +150,7 @@ public class Player : NetworkBehaviour
 
     public void OnHandChanged()
     {
-        float posY = networkObject.HasInputAuthority ? -4.5f : 5f;
+        float posY = networkObject.HasInputAuthority ? -5f : 5f;
         int count = hand.Count;
 
         if (count == 0)
@@ -184,16 +201,16 @@ public class Player : NetworkBehaviour
     }
 
     // 1=> -0
-    // 2=> -1 +1
-    // 3=> -2 -0 +2
-    // 4=> -3 -1 +1 +3
-    // 5=> -4 -2 -0 +2 +4
+    // 2=> -0.75 +0.75
+    // 3=> -1.5 -0 +1.5
+    // 4=> -2.25 -0.75 +0.75 +2.25
+    // 5=> -3 -1.5 -0 +1.5 +3
     public Vector3 GetFieldPos(int i, int cnt = -1)
     {
         if (cnt < 0)
             cnt = field.Count;
-        float posY = networkObject.HasInputAuthority ? -1.5f : 1.5f;
-        return new Vector3(1 - cnt + 2 * i, posY, 0f);
+        float posY = networkObject.HasInputAuthority ? -1f : 1f;
+        return new Vector3(-0.75f * (cnt - 1) + 1.5f * i, posY, 0f);
     } 
 
     public void OnFieldChanged()
@@ -201,6 +218,15 @@ public class Player : NetworkBehaviour
         for (int i = 0; i < field.Count; ++i)
         {
             gameManager.GetCard(field[i]).SetPR(GetFieldPos(i, field.Count), Quaternion.identity, 1f);
+        }
+    }
+
+    public void OnCemetryChanged()
+    {
+        for (int i = 0; i < cemetry.Count; ++i)
+        {
+            CardMono _cardMono = gameManager.GetCard(cemetry[i]);
+            _cardMono.transform.DOMove(_cardMono.networkObject.HasInputAuthority ? new Vector3(11f, -2.5f, 0f) : new Vector3(11f, 2.5f, 0f), 0);
         }
     }
 }

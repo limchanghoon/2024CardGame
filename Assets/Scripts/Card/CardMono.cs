@@ -1,17 +1,22 @@
-using System.Collections;
 using TMPro;
 using UnityEngine;
 using DG.Tweening;
 using Fusion;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
-using System.ComponentModel;
 
-public class CardMono : NetworkBehaviour
+public class CardMono : NetworkBehaviour, ITargetable
 {
     public NetworkObject networkObject;
-    public CardSO cardSO {  get; private set; }
-    [SerializeField] SpriteRenderer spriteRender;
+    public CardSO cardSO { get; private set; }
+
+    public ICommand battleCry { get; private set; }
+    public ICommand deathRattle { get; private set; }
+
+    [Header("핸드")]
+    [SerializeField] SpriteRenderer cardRender;
+    [SerializeField] SpriteRenderer bgRender;
+    [SerializeField] Sprite legendSprite;
     [SerializeField] TextMeshPro nameText;
     [SerializeField] TextMeshPro costText;
     [SerializeField] TextMeshPro powerText;
@@ -20,9 +25,18 @@ public class CardMono : NetworkBehaviour
     [SerializeField] GameObject backFace;
     [SerializeField] GameObject fieldFace;
     [SerializeField] GameObject backFaceGlow;
-
+    [SerializeField] GameObject canUseGlow;
+    
+    [Header("필드")]
     [SerializeField] TextMeshPro fieldPowerText;
     [SerializeField] TextMeshPro fieldHealthText;
+    [SerializeField] GameObject canAttackGlow;
+    [SerializeField] GameObject deathRattleIcon;
+    private int canAttackCount = 0;
+    public bool canAttack { 
+        get { return canAttackCount > 0; }
+        private set { canAttackCount = 1; } 
+    }
 
     [HideInInspector, Networked] public NetworkObject Target { get; set; }
     public Player owner { get; private set; }
@@ -41,6 +55,8 @@ public class CardMono : NetworkBehaviour
     HandMouseEvent handMouseEvent;
     FieldMouseEvent fieldMouseEvent;
 
+    private int visiblePower = 0;
+    private int visibleHealth = 0;
     public int currentPower {  get; set; }
     public int currentHealth {  get; set; }
 
@@ -116,7 +132,7 @@ public class CardMono : NetworkBehaviour
     }
 
     [Rpc(RpcSources.All, RpcTargets.All)]
-    public void RPC_ChangeState(CardState cardState)
+    public void RPC_ChangeCardState(CardState cardState)
     {
         switch (cardState)
         {
@@ -135,7 +151,7 @@ public class CardMono : NetworkBehaviour
                 frontFace.SetActive(false);
                 backFace.SetActive(false);
                 fieldFace.SetActive(true);
-                gameObject.layer = LayerMask.NameToLayer("FieldCard");
+                gameObject.layer = LayerMask.NameToLayer("Targetable");
                 break;
             case CardState.Cemetry:
                 currentMouseEvent = null;
@@ -149,25 +165,58 @@ public class CardMono : NetworkBehaviour
         }
     }
 
+    // 여기서 RPC로 타겟 다 정해서 전달...?
+    public void BattleCry(NetworkId _target)
+    {
+        if (!networkObject.HasInputAuthority) return;
+        //battleCry.Execute(this, _target);
+        RPC_BattleCry(_target);
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    public void RPC_BattleCry(NetworkId _target)
+    {
+        battleCry.Execute(this, _target);
+    }
+
+    // 여기서 RPC로 타겟 다 정해서 전달...?
+    public void DeathRattle()
+    {
+        if (!networkObject.HasInputAuthority) return;
+        //deathRattle.Execute(this, default);
+        RPC_DeathRattle();
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    public void RPC_DeathRattle()
+    {
+        deathRattle.Execute(this, default);
+    }
+
     public int Hit(int damage)
     {
+        if (damage <= 0) return -1;
         currentHealth -= damage;
+        if (currentHealth <= 0)
+        {
+            owner.DestroyCardOfField(this);
+        }
         return damage;
     }
 
     public void UpdateHit(int damage)
     {
+        if (damage < 0) return;
         owner.gameManager.GenerateHitText(damage, transform.position);
+        visibleHealth -= damage;
         UpdateFieldText();
-        if (currentHealth <= 0)
+        if (visibleHealth <= 0)
         {
-            if (networkObject.HasInputAuthority)
-                owner.DestroyCardOfField(this);
             transform.DOShakePosition(0.5f, 0.5f).SetDelay(0.1f).OnComplete(Die);
         }
     }
 
-    private void Die()
+    public void Die()
     {
         //임시
         owner.gameManager.effectManager.DoHitEffect(transform.position);
@@ -179,14 +228,15 @@ public class CardMono : NetworkBehaviour
     [Rpc(RpcSources.All, RpcTargets.All)]
     public void RPC_Attack(NetworkId _uniqueID)
     {
-        CardMono _target = owner.gameManager.GetCard(_uniqueID);
+        var _targetObj = owner.gameManager.GetNetworkObject(_uniqueID);
+        var _target = _targetObj.GetComponent<ITargetable>();
 
         int opponentHit = _target.Hit(currentPower);
         int myHit = Hit(_target.currentPower);
 
         Vector3 _origin = transform.position;
 
-        DOTween.Sequence().Append(transform.DOMove(_target.transform.position, 0.2f).SetEase(Ease.OutCirc))
+        DOTween.Sequence().Append(transform.DOMove(_targetObj.transform.position, 0.2f).SetEase(Ease.OutCirc))
             .Append(transform.DOMove(_origin, 0.1f))
             .OnComplete(() => { _target.UpdateHit(opponentHit); UpdateHit(myHit); });
     }
@@ -207,13 +257,43 @@ public class CardMono : NetworkBehaviour
 
     public void UpdateFieldText()
     {
-        fieldPowerText.text = currentPower.ToString();
-        fieldHealthText.text = currentHealth.ToString();
+        fieldPowerText.text = visiblePower.ToString();
+        fieldHealthText.text = visibleHealth.ToString();
     }
 
     public void SetAsSO()
     {
         currentPower = cardSO.power;
         currentHealth = cardSO.health;
+
+        visiblePower = currentPower;
+        visibleHealth = currentHealth;
+        if (cardSO.grade == CardGrade.Lengend)
+            bgRender.sprite = legendSprite;
+
+        if (cardSO.battleCry)
+            battleCry = new Hit(2);
+        if (cardSO.deathRattle)
+        {
+            deathRattle = new DrawCard(2);
+            deathRattleIcon.SetActive(true);
+        }
+
+    }
+
+    public TargetType GetTargetType()
+    {
+        if (networkObject.HasInputAuthority) return TargetType.MyMinion;
+        else return TargetType.OpponentMinion;
+    }
+
+    public bool CanBeTarget()
+    {
+        return currentHealth > 0;
+    }
+
+    public NetworkId GetNetworkId()
+    {
+        return uniqueID;
     }
 }

@@ -3,11 +3,11 @@ using UnityEngine;
 
 public class EffectManager : MonoBehaviour
 {
-    [SerializeField] GameObject testEffect;
+    [SerializeField] MyObjectPool pool;
 
     public void DoHitEffect(Vector3 _pos)
     {
-        testEffect.transform.DOMove(_pos, 0);
-        testEffect.SetActive(true);
+        _pos.z = -300;
+        pool.CreateOjbect().transform.DOMove(_pos, 0);
     }
 }

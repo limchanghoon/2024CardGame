@@ -18,3 +18,6 @@ MonoBehaviour:
   cost: 5
   power: 4
   health: 6
+  battleCryTarget: -1
+  battleCry: 1
+  deathRattle: 1

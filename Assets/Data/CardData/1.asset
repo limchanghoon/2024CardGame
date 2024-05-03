@@ -14,6 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cardID: 1
   cardName: "\uBC29\uD328\uBCD1"
+  grade: 0
   cost: 7
   power: 10
   health: 15
+  battleCryTarget: -1
+  battleCry: 1
+  deathRattle: 1

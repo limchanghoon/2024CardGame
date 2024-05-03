@@ -19,4 +19,9 @@ public class PoolingObject : MonoBehaviour
     {
         _ManagedPool.Release(gameObject);
     }
+
+    void OnParticleSystemStopped()
+    {
+        DestroyObject();
+    }
 }

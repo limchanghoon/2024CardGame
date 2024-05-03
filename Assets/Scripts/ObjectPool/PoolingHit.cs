@@ -9,10 +9,11 @@ public class PoolingHit : PoolingObject
     [SerializeField] Gradient gradient;
 
     float t = 0f;
-    float targetT = 3f;
+    float targetT = 2f;
 
     public void Set(int _damage, Vector3 _pos)
     {
+        _pos.z = -200;
         text.text = "-" + _damage.ToString();
         transform.DOMove(_pos, 0);
     }

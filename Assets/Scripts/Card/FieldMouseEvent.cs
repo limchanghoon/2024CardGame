@@ -1,4 +1,4 @@
-using DG.Tweening.Core.Easing;
+using Fusion;
 using UnityEngine;
 
 public class FieldMouseEvent : IMyMouseEvent
@@ -18,12 +18,12 @@ public class FieldMouseEvent : IMyMouseEvent
         _pos.z = -100f;
         Ray2D ray = new Ray2D(_pos, Vector2.zero);
         hit = Physics2D.Raycast(ray.origin, ray.direction, Mathf.Infinity);
-        int layer = LayerMask.NameToLayer("FieldCard");
+        int layer = LayerMask.NameToLayer("Targetable");
         // юс╫ц
-        if (hit.collider != null && hit.collider.gameObject.layer == layer && cardMono.owner.gameManager.IsMyTurn())
+        if (hit.collider != null && hit.collider.gameObject.layer == layer && cardMono.owner.IsMyTurn())
         {
-            CardMono _target = hit.collider.GetComponent<CardMono>();
-            if (!_target.networkObject.HasInputAuthority && _target.currentHealth > 0)
+            var _ITargetable = hit.collider.GetComponent<ITargetable>();
+            if (((_ITargetable.GetTargetType() & TargetType.Opponent) != 0) && _ITargetable.CanBeTarget())
             {
                 return true;
             }
@@ -39,6 +39,7 @@ public class FieldMouseEvent : IMyMouseEvent
     public void OnMyMouseDown()
     {
         if (!cardMono.networkObject.HasInputAuthority) return;
+        if (!cardMono.owner.IsMyTurn()) return;
         cardMono.isDragging = true;
         cardMono.owner.gameManager.DisalbeFieldCardTooltip();
     }
@@ -47,6 +48,7 @@ public class FieldMouseEvent : IMyMouseEvent
     {
         if (!cardMono.networkObject.HasInputAuthority) return;
         if (!cardMono.isDragging) return;
+        if (!cardMono.owner.IsMyTurn()) return;
         cardMono.isDragging = false;
         cardMono.owner.gameManager.SetLineTarget(Vector3.zero, Vector3.zero, false, false);
 
@@ -54,8 +56,9 @@ public class FieldMouseEvent : IMyMouseEvent
         if (IsTargetOn(out hit))
         {
             cardMono.owner.gameManager.DisalbeFieldCardTooltip();
-            CardMono targetCard = hit.collider.gameObject.GetComponent<CardMono>();
-            cardMono.RPC_Attack(targetCard.uniqueID);
+            var _networkObject = hit.collider.gameObject.GetComponent<ITargetable>();
+            if (_networkObject == null) return;
+            cardMono.RPC_Attack(_networkObject.GetNetworkId());
         }
     }
 
@@ -63,6 +66,7 @@ public class FieldMouseEvent : IMyMouseEvent
     {
         if (!cardMono.networkObject.HasInputAuthority) return;
         if (!cardMono.isDragging) return;
+        if (!cardMono.owner.IsMyTurn()) return;
         RaycastHit2D hit;
         cardMono.owner.gameManager.SetLineTarget(cardMono.gameObject.transform.position, Camera.main.ScreenToWorldPoint(Input.mousePosition), true, IsTargetOn(out hit));
     }
