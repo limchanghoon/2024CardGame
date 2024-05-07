@@ -15,9 +15,11 @@ MonoBehaviour:
   cardID: 1
   cardName: "\uBC29\uD328\uBCD1"
   grade: 0
-  cost: 7
-  power: 10
-  health: 15
+  cost: 2
+  power: 1
+  health: 3
+  speicalAbilityEnum: 1
+  infomation: "<b>\uB3C4\uBC1C</b>"
+  battleCry: {fileID: 0}
+  deathRattle: {fileID: 0}
   battleCryTarget: -1
-  battleCry: 1
-  deathRattle: 1

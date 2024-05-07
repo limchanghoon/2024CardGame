@@ -1,7 +1,9 @@
 using DG.Tweening;
+using DG.Tweening.Core.Easing;
 using Fusion;
 using System.Collections.Generic;
 using System.Linq;
+using System.Xml;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -21,8 +23,9 @@ public class Player : NetworkBehaviour
     public GameObject _cardPrefab;
     public NetworkObject networkObject { get; private set; }
 
-    [Networked, Capacity(7), OnChangedRender(nameof(OnFieldChanged))] public NetworkLinkedList<NetworkId> field { get; }
-    //public List<NetworkId> field = new List<NetworkId>(7);
+    //[Networked, Capacity(7), OnChangedRender(nameof(OnFieldChanged))] public NetworkLinkedList<NetworkId> field { get; }
+    public List<NetworkId> showField = new List<NetworkId>(7);
+    public List<NetworkId> field = new List<NetworkId>(7);
     [Networked, Capacity(10), OnChangedRender(nameof(OnHandChanged))] public NetworkLinkedList<NetworkId> hand { get; }
     [Networked, Capacity(60)] public NetworkLinkedList<NetworkId> cemetry { get; }
     [Networked, Capacity(50)] public NetworkLinkedList<NetworkId> deck { get; }
@@ -54,28 +57,21 @@ public class Player : NetworkBehaviour
         }
     }
 
-    [Rpc(RpcSources.All, RpcTargets.All)]
-    public void RPC_Debug(string str)
-    {
-        Debug.Log(str);
-    }
-
     public void DrawMyCard()
     {
         gameManager.DrawCard(gameManager.GetPlayerOrder(this));
     }
 
-    public void SpawnCardOfHand(NetworkId _uniqueID, int _location, NetworkId _target = default)
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    public void RPC_SpawnCardOfHand(NetworkId _uniqueID, int _location, NetworkId _target = default)
     {
-        if (Object.HasStateAuthority)
-            hand.Remove(_uniqueID);
-
         if (field.Count == field.Capacity)
         {
             Debug.LogAssertion("필드 FULL");
             return;
         }
-        /*
+
+        hand.Remove(_uniqueID);
         if (_location < field.Count)
         {
             field.Insert(_location, _uniqueID);
@@ -84,29 +80,30 @@ public class Player : NetworkBehaviour
         {
             field.Add(_uniqueID);
         }
-        */
-        if (field.Count == 0)
+
+        CardMono _cardMono = gameManager.GetCard(_uniqueID);
+        _cardMono.SetPR(new Vector3(9999, 9999, 9999), Quaternion.identity, 0);
+        _cardMono.ChangeCardState(CardState.Field);
+        GameManager.actionQueue.Enqueue(() => SpawnCardOfHand(_uniqueID, _location, _target));
+        gameManager.EnqueueChangeField();
+        // 전투의 함성
+        _cardMono.BattleCry(_target);
+    }
+
+    private void SpawnCardOfHand(NetworkId _uniqueID, int _location, NetworkId _target = default)
+    {
+        if (_location < field.Count)
         {
-            field.Add(_uniqueID);
+            showField.Insert(_location, _uniqueID);
         }
         else
         {
-            NetworkId _temp = field[field.Count - 1];
-            for (int i = field.Count - 1; i > _location; i--)
-            {
-                field.Set(i, field[i - 1]);
-            }
-            field.Add(_temp);
-            field.Set(_location, _uniqueID);
+            showField.Add(_uniqueID);
         }
-
-
         CardMono _cardMono = gameManager.GetCard(_uniqueID);
-        _cardMono.RPC_ChangeCardState(CardState.Field);
-
-        // 전투의 함성
-        if (_cardMono.battleCry != null)
-            _cardMono.BattleCry(_target);
+        _cardMono.SetPR(GetFieldPos(_location, showField.Count), Quaternion.identity, 0);
+        gameManager.ShowCurrentAnimCard(_cardMono, new Vector3(-10, 0, 0));
+        GameManager.isAction = false;
     }
 
     public void DestroyCardOfField(CardMono _cardMono)
@@ -114,15 +111,17 @@ public class Player : NetworkBehaviour
         NetworkId _uniqueID = _cardMono.uniqueID;
 
         field.Remove(_uniqueID);
+        if (networkObject.HasInputAuthority)
+        {
+            if (cemetry.Count == cemetry.Capacity) cemetry.Remove(cemetry.Get(0));
+            cemetry.Add(_uniqueID);
+        }
 
-        if (cemetry.Count == cemetry.Capacity) cemetry.Remove(cemetry.Get(0));
-        cemetry.Add(_uniqueID);
+        _cardMono.ChangeCardState(CardState.Cemetry);
 
-        _cardMono.RPC_ChangeCardState(CardState.Cemetry);
-
-        // 죽음의 메아리 발동해야함
-        if (_cardMono.deathRattle != null)
-            _cardMono.DeathRattle();
+        // 죽음의 메아리 Queue에 집어 넣는다!
+        if (IsMyTurn())
+            gameManager.deathRattleQueue.Enqueue(_cardMono.DeathRattle);
     }
 
     public bool IsMyTurn()
@@ -132,7 +131,6 @@ public class Player : NetworkBehaviour
 
     public void ShowFieldCardTooltip(CardMono cardMono)
     {
-        //gameManager.ShowFieldCardTooltip(cardMono, GetFieldPos(field.IndexOf(cardMono.uniqueID)));
         gameManager.ShowFieldCardTooltip(cardMono, cardMono.transform.position);
     }
 
@@ -146,6 +144,18 @@ public class Player : NetworkBehaviour
     {
         cardDictionary.TryGetValue(_networkId, out var result);
         return result;
+    }
+
+    public bool IsTauntInField()
+    {
+        if(gameManager.GetMyHereMono().isTaunt) return true;
+
+        for (int i = 0; i < field.Count; i++)
+        {
+            if (GetMyCard(field[i]).specialAbilityEnum.HasFlag(SpecialAbilityEnum.taunt)) 
+                return true;
+        }
+        return false;
     }
 
     public void OnHandChanged()
@@ -211,13 +221,13 @@ public class Player : NetworkBehaviour
             cnt = field.Count;
         float posY = networkObject.HasInputAuthority ? -1f : 1f;
         return new Vector3(-0.75f * (cnt - 1) + 1.5f * i, posY, 0f);
-    } 
+    }
 
-    public void OnFieldChanged()
+    public void ChangeShowField()
     {
-        for (int i = 0; i < field.Count; ++i)
+        for (int i = 0; i < showField.Count; ++i)
         {
-            gameManager.GetCard(field[i]).SetPR(GetFieldPos(i, field.Count), Quaternion.identity, 1f);
+            gameManager.GetCard(showField[i]).SetPR(GetFieldPos(i, showField.Count), Quaternion.identity, 1f);
         }
     }
 

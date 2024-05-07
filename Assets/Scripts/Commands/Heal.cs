@@ -1,4 +1,5 @@
 using Fusion;
+using UnityEngine;
 
 
 public class Heal : ICommand
@@ -15,13 +16,14 @@ public class Heal : ICommand
         return 0;
     }
 
-    //public NetworkData[] DoAndGetRandomTarget(CardMono mine, NetworkId _target)
-    //{
-    //}
-
     public void Execute(CardMono mine, NetworkId target)
     {
 
+    }
+
+    public void ExecuteInRPC(ITargetable targetHit)
+    {
+        throw new System.NotImplementedException();
     }
 
     public bool IsNeedTarget()

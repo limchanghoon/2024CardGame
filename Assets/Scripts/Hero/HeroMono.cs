@@ -1,23 +1,27 @@
 using Fusion;
+using System.Collections;
 using TMPro;
 using UnityEngine;
 
 public class HeroMono : NetworkBehaviour, ITargetable
 {
     [SerializeField] Player player;
-
     [SerializeField] TextMeshPro hpText;
+    [SerializeField] GameObject diePrediction;
 
     private int visiblePower = 0;
     private int visibleHealth = 0;
 
     public int currentPower { get; set; }
     public int currentHealth { get; set; }
+    bool isDie = false;
+    public bool isTaunt { get; set; }
 
     private void Awake()
     {
         currentPower = 0;
         currentHealth = 30;
+        isTaunt = false;
 
         visiblePower = currentPower;
         visibleHealth = currentHealth;
@@ -28,9 +32,24 @@ public class HeroMono : NetworkBehaviour, ITargetable
         return true;
     }
 
+    public bool CanBeDirectAttackTarget()
+    {
+        if (CanBeTarget())
+        {
+            if (player.IsTauntInField())
+            {
+                if (isTaunt) return true;
+                return false;
+            }
+            return true;
+        }
+        return false;
+    }
+
     public void Die()
     {
-
+        if (isDie) return;
+        isDie = true;
     }
 
     public TargetType GetTargetType()
@@ -39,20 +58,40 @@ public class HeroMono : NetworkBehaviour, ITargetable
         else return TargetType.OpponentHero;
     }
 
-    [Rpc(RpcSources.All, RpcTargets.Proxies)]
-    public void RPC_Hit(int damage)
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    public void RPC_Command(NetworkObject networkObject)
     {
-        Hit(damage);
+        networkObject.GetComponent<ICommand>()?.ExecuteInRPC(this);
     }
 
-    public int Hit(int damage)
+    public int PredictHit(int damage)
     {
+        if (damage < 0) return -1;
+        return damage;
+    }
+
+    public void Hit(int damage)
+    {
+        if (damage < 0) return;
         currentHealth -= damage;
+    }
+
+    public bool CheckIsFirstDie()
+    {
+        if (isDie) return false;
         if (currentHealth <= 0)
         {
+            isDie = true;
             Die();
+            return true;
         }
-        return damage;
+        return false;
+    }
+
+    public bool DieIfHit(int damage)
+    {
+        if (damage >= currentHealth) return true;
+        return false;
     }
 
     public void UpdateHit(int damage)
@@ -67,4 +106,11 @@ public class HeroMono : NetworkBehaviour, ITargetable
     {
         return player.networkObject.Id;
     }
+
+    public void SetActivePrediction(bool _active)
+    {
+        diePrediction.SetActive(_active);
+    }
+
+    public GameObject GetTargetGameObject() => gameObject;
 }

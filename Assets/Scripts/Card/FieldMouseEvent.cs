@@ -23,7 +23,7 @@ public class FieldMouseEvent : IMyMouseEvent
         if (hit.collider != null && hit.collider.gameObject.layer == layer && cardMono.owner.IsMyTurn())
         {
             var _ITargetable = hit.collider.GetComponent<ITargetable>();
-            if (((_ITargetable.GetTargetType() & TargetType.Opponent) != 0) && _ITargetable.CanBeTarget())
+            if (((_ITargetable.GetTargetType() & TargetType.Opponent) != 0) && _ITargetable.CanBeDirectAttackTarget())
             {
                 return true;
             }
@@ -51,6 +51,7 @@ public class FieldMouseEvent : IMyMouseEvent
         if (!cardMono.owner.IsMyTurn()) return;
         cardMono.isDragging = false;
         cardMono.owner.gameManager.SetLineTarget(Vector3.zero, Vector3.zero, false, false);
+        cardMono.Predict(null);
 
         RaycastHit2D hit;
         if (IsTargetOn(out hit))
@@ -68,7 +69,9 @@ public class FieldMouseEvent : IMyMouseEvent
         if (!cardMono.isDragging) return;
         if (!cardMono.owner.IsMyTurn()) return;
         RaycastHit2D hit;
-        cardMono.owner.gameManager.SetLineTarget(cardMono.gameObject.transform.position, Camera.main.ScreenToWorldPoint(Input.mousePosition), true, IsTargetOn(out hit));
+        bool _isTargetOn = IsTargetOn(out hit);
+        cardMono.owner.gameManager.SetLineTarget(cardMono.gameObject.transform.position, Camera.main.ScreenToWorldPoint(Input.mousePosition), true, _isTargetOn);
+        cardMono.Predict(_isTargetOn ? hit.collider.gameObject : null);
     }
 
     public void OnMyMouseEnter()

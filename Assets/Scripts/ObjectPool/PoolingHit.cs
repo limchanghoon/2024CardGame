@@ -16,14 +16,7 @@ public class PoolingHit : PoolingObject
         _pos.z = -200;
         text.text = "-" + _damage.ToString();
         transform.DOMove(_pos, 0);
-    }
-
-    private void OnEnable()
-    {
         t = 0f;
-        Color newColor = gradient.Evaluate(0);
-        spriteRenderer.color = newColor;
-        text.color = newColor;
     }
 
     private void Update()

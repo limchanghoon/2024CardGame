@@ -11,9 +11,13 @@ public class CardSO : ScriptableObject
     public int power;
     public int health;
 
+    [Header("특수 능력")]
+    public SpecialAbilityEnum speicalAbilityEnum;
+    [TextArea] public string infomation;
+    public GameObject battleCry;
+    public GameObject deathRattle;
+
     public TargetType battleCryTarget;
-    public bool battleCry;
-    public bool deathRattle;
 
     public byte GetLimitCount()
     {
@@ -23,7 +27,7 @@ public class CardSO : ScriptableObject
 
     public bool IsTargetExist(GameManager gameManager)
     {
-        if (battleCryTarget == 0) return false;
+        if (battleCry == null || battleCryTarget == 0) return false;
 
         if ((int)battleCryTarget == -1)
         {

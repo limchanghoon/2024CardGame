@@ -2,9 +2,9 @@ using DG.Tweening;
 using Fusion;
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Xml;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -15,30 +15,61 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
     // networkObject.HasStateAuthority : 마스터
     // Runner.IsSceneAuthority : 마스터
 
+    public Queue<Action> deathRattleQueue = new Queue<Action>();
+    public static Queue<Action> actionQueue = new Queue<Action>();
+    public static bool isAction = false;
+
     NetworkObject networkObject;
     [Networked, OnChangedRender(nameof(OnTimerChanged))] public int timer { get; set; }
-    [SerializeField] TextMeshProUGUI textMeshProUGUI;
+    [SerializeField] TextMeshPro testText;
     [SerializeField] Button btn_EndTurn;
     [SerializeField] FieldCardTooltip fieldCardTooltip;
+    [SerializeField] FieldCardTooltip currentAnimCard;
     [SerializeField] LinePainter linePainter;
     [SerializeField] GameObject _cardPrefab;
 
     bool isReady = false;
     int readyCount = 0;
-    [SerializeField] int current = -1;
+    int current = -1;
+    bool isTurnDelay = false;
+    bool isDeathRattling = false;
+
     [Networked, Capacity(2)] NetworkArray<int> order { get; }
 
-    Player[] players = new Player[2];
+    Player[] _players = new Player[2];
+    Player[] players { 
+        get
+        {
+            if (_players[0] == null || _players[1] == null)
+            {
+                SettingAfterAllPlayerSpawned();
+            }
+            return _players;
+        }
+    }
     [HideInInspector] public HeroMono[] heroMonos = new HeroMono[2];
 
     [SerializeField] private MyObjectPool hitObjectPool;
     public EffectManager effectManager;
 
+
+    private void Update()
+    {
+        if(!isAction && actionQueue.Count > 0)
+        {
+            isAction = true;
+            actionQueue.Dequeue()?.Invoke();
+        }
+    }
+
     public void AfterSpawned()
     {
+        isAction = false;
+        actionQueue.Clear();
+        deathRattleQueue.Clear();
         if (Runner.SceneManager.MainRunnerScene.buildIndex == 0) return;
         networkObject = GetComponent<NetworkObject>();
-        textMeshProUGUI.text = "마스터 : " + networkObject.HasStateAuthority.ToString();
+        testText.text = "마스터 : " + networkObject.HasStateAuthority.ToString();
 
         if (networkObject.HasStateAuthority)
         {
@@ -78,47 +109,58 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
     [Rpc(RpcSources.All, RpcTargets.All)]
     public void RPC_TurnNext(int turn)
     {
-        current = turn;
-        DrawCard(current);
-        if (IsMyTurn())
+        btn_EndTurn.interactable = false;
+        isTurnDelay = true;
+        testText.text = "턴 넘어가는 중..";
+        actionQueue.Enqueue(() =>
         {
-            textMeshProUGUI.text = "내 차례";
-            btn_EndTurn.interactable = true;
-        }
-        else
-        {
-            textMeshProUGUI.text = "상대 차례";
-            btn_EndTurn.interactable = false;
-        }
+            isTurnDelay = false;
+            current = turn;
+            DrawCard(current);
+            if (IsMyTurn())
+            {
+                testText.text = "내 차례";
+                btn_EndTurn.interactable = true;
+            }
+            else
+            {
+                testText.text = "상대 차례";
+                btn_EndTurn.interactable = false;
+            }
+            GameManager.isAction = false;
+        });
     }
 
     [Rpc(RpcSources.All, RpcTargets.All)]
     private void RPC_SettingAfterAllPlayerSpawned()
     {
-        var _players = GameObject.FindGameObjectsWithTag("Player");
-        int p0 = _players[0].GetComponent<NetworkObject>().Runner.LocalPlayer.PlayerId;
-        int p1 = _players[1].GetComponent<NetworkObject>().Runner.LocalPlayer.PlayerId;
+        SettingAfterAllPlayerSpawned();
+    }
+
+    private void SettingAfterAllPlayerSpawned()
+    {
+        var playerObjs = GameObject.FindGameObjectsWithTag("Player");
+        int p0 = playerObjs[0].GetComponent<NetworkObject>().Runner.LocalPlayer.PlayerId;
+        int p1 = playerObjs[1].GetComponent<NetworkObject>().Runner.LocalPlayer.PlayerId;
         if (p0 == order[0])
         {
-            players[0] = _players[0].GetComponent<Player>();
-            players[1] = _players[1].GetComponent<Player>();
+            _players[0] = playerObjs[0].GetComponent<Player>();
+            _players[1] = playerObjs[1].GetComponent<Player>();
 
-            heroMonos[0] = _players[0].GetComponent<HeroMono>();
-            heroMonos[1] = _players[1].GetComponent<HeroMono>();
+            heroMonos[0] = playerObjs[0].GetComponent<HeroMono>();
+            heroMonos[1] = playerObjs[1].GetComponent<HeroMono>();
         }
         else
         {
-            players[0] = _players[1].GetComponent<Player>();
-            players[1] = _players[0].GetComponent<Player>();
+            _players[0] = playerObjs[1].GetComponent<Player>();
+            _players[1] = playerObjs[0].GetComponent<Player>();
 
-            heroMonos[0] = _players[1].GetComponent<HeroMono>();
-            heroMonos[1] = _players[0].GetComponent<HeroMono>();
+            heroMonos[0] = playerObjs[1].GetComponent<HeroMono>();
+            heroMonos[1] = playerObjs[0].GetComponent<HeroMono>();
         }
 
         players[0].OnHandChanged();
-        players[0].OnFieldChanged();
         players[1].OnHandChanged();
-        players[1].OnFieldChanged();
 
         heroMonos[0].transform.DOMove(heroMonos[0].HasInputAuthority ? new Vector3(0, -2.5f, 1) : new Vector3(0, 2.5f, 1), 1f);
         heroMonos[1].transform.DOMove(heroMonos[1].HasInputAuthority ? new Vector3(0, -2.5f, 1) : new Vector3(0, 2.5f, 1), 1f);
@@ -205,7 +247,7 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
 
     public void OnTimerChanged()
     {
-        textMeshProUGUI.text = timer.ToString();
+        testText.text = timer.ToString();
     }
 
     public Player GetMyPlayer()
@@ -263,6 +305,7 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
 
     public bool IsMyTurn()
     {
+        if (isTurnDelay) return false;
         return order.Get(current) == Runner.LocalPlayer.PlayerId;
     }
 
@@ -281,6 +324,68 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
         fieldCardTooltip.UpdateUI();
     }
 
+    public void ShowCurrentAnimCard(CardMono cardMono, Vector3 _pos)
+    {
+        currentAnimCard.Show(cardMono, _pos);
+    }
+
+    public void DisalbeCurrentAnimCard()
+    {
+        currentAnimCard.Disable();
+    }
+
+    public void UpdateCurrentAnimCard()
+    {
+        currentAnimCard.UpdateUI();
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    public void RPC_EnqueueChangeField()
+    {
+        EnqueueChangeField();
+    }
+
+    // Queue에 한 레이어의 죽음의 메아리 발동 시키자
+    public void DoDeathRattleOneLayer()
+    {
+        if (isDeathRattling) return;
+        isDeathRattling = true;
+        int cnt = deathRattleQueue.Count;
+        if(cnt == 0)
+        {
+            isDeathRattling = false;
+            return;
+        }
+
+        while (cnt-- > 0)
+        {
+            deathRattleQueue.Dequeue()?.Invoke();
+        }
+        isDeathRattling = false;
+        DoDeathRattleOneLayer();
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    public void RPC_CheckAllDie(NetworkId[] _needToCheck)
+    {
+        for(int i = 0;i< _needToCheck.Length; ++i)
+        {
+            GetNetworkObject(_needToCheck[i]).gameObject.GetComponent<ITargetable>()?.CheckIsFirstDie();
+        }
+    }
+
+    public void EnqueueChangeField()
+    {
+        actionQueue.Enqueue(ChangeField);
+    }
+
+    public void ChangeField()
+    {
+        players[0].ChangeShowField();
+        players[1].ChangeShowField();
+        GameManager.isAction = false;
+    }
+
     public void SetLineTarget(Vector3 p1, Vector3 p2, bool edgeOn, bool targetOn)
     {
         linePainter.Draw(p1, p2, edgeOn, targetOn);
@@ -289,18 +394,5 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
     public void GenerateHitText(int damage, Vector3 _pos)
     {
         hitObjectPool.CreateOjbect().GetComponent<PoolingHit>().Set(damage, _pos);
-    }
-
-    [ContextMenu("UPDATEUPDATE")]
-    public void UPDATEUPDATE()
-    {
-        RPC_UPDATEUPDATE();
-    }
-
-    [Rpc(RpcSources.All, RpcTargets.All)]
-    public void RPC_UPDATEUPDATE()
-    {
-        players[0].OnFieldChanged();
-        players[1].OnFieldChanged();
     }
 }

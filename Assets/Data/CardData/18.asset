@@ -16,8 +16,9 @@ MonoBehaviour:
   cardName: "\uADF8\uB0E5 \uBA40\uB85D"
   grade: 0
   cost: 1
-  power: 1
+  power: 2
   health: 1
+  infomation: 
+  battleCry: {fileID: 0}
+  deathRattle: {fileID: 0}
   battleCryTarget: -1
-  battleCry: 1
-  deathRattle: 1

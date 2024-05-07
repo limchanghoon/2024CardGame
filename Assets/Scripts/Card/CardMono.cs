@@ -4,14 +4,45 @@ using DG.Tweening;
 using Fusion;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
+using System.Collections;
 
-public class CardMono : NetworkBehaviour, ITargetable
+public class CardMono : NetworkBehaviour, ITargetable, IPredict
 {
     public NetworkObject networkObject;
     public CardSO cardSO { get; private set; }
 
-    public ICommand battleCry { get; private set; }
-    public ICommand deathRattle { get; private set; }
+    [Networked] public NetworkObject battleCryObj { get; private set; }
+
+    private ICommand _battleCry;
+    public ICommand battleCry
+    {
+        get
+        {
+            if (battleCryObj == null) return null;
+            if (_battleCry == null) _battleCry = battleCryObj.GetComponent<ICommand>();
+            return _battleCry;
+        }
+        set
+        {
+            _battleCry = value;
+        }
+    }
+
+    [Networked] NetworkObject deathRattleObj { get; set; }
+    private ICommand _deathRattle;
+    public ICommand deathRattle
+    {
+        get
+        {
+            if (deathRattleObj == null) return null;
+            if (_deathRattle == null) _deathRattle = deathRattleObj.GetComponent<ICommand>();
+            return _deathRattle;
+        }
+        set
+        {
+            _deathRattle = value;
+        }
+    }
 
     [Header("핸드")]
     [SerializeField] SpriteRenderer cardRender;
@@ -21,6 +52,7 @@ public class CardMono : NetworkBehaviour, ITargetable
     [SerializeField] TextMeshPro costText;
     [SerializeField] TextMeshPro powerText;
     [SerializeField] TextMeshPro healthText;
+    [SerializeField] TextMeshPro abilityText;
     [SerializeField] GameObject frontFace;
     [SerializeField] GameObject backFace;
     [SerializeField] GameObject fieldFace;
@@ -32,11 +64,17 @@ public class CardMono : NetworkBehaviour, ITargetable
     [SerializeField] TextMeshPro fieldHealthText;
     [SerializeField] GameObject canAttackGlow;
     [SerializeField] GameObject deathRattleIcon;
+    [SerializeField] GameObject tauntIcon;
+    [SerializeField] GameObject diePrediction;
     private int canAttackCount = 0;
     public bool canAttack { 
         get { return canAttackCount > 0; }
         private set { canAttackCount = 1; } 
     }
+
+    public SpecialAbilityEnum specialAbilityEnum { get; set; }
+    // 마우스 타겟
+    ITargetable target;
 
     [HideInInspector, Networked] public NetworkObject Target { get; set; }
     public Player owner { get; private set; }
@@ -59,6 +97,7 @@ public class CardMono : NetworkBehaviour, ITargetable
     private int visibleHealth = 0;
     public int currentPower {  get; set; }
     public int currentHealth {  get; set; }
+    bool isDie = false;
 
     public override void Spawned()
     {
@@ -131,8 +170,8 @@ public class CardMono : NetworkBehaviour, ITargetable
         currentMouseEvent.OnIsZoomingChanged();
     }
 
-    [Rpc(RpcSources.All, RpcTargets.All)]
-    public void RPC_ChangeCardState(CardState cardState)
+    //[Rpc(RpcSources.All, RpcTargets.All)]
+    public void ChangeCardState(CardState cardState)
     {
         switch (cardState)
         {
@@ -155,9 +194,7 @@ public class CardMono : NetworkBehaviour, ITargetable
                 break;
             case CardState.Cemetry:
                 currentMouseEvent = null;
-
-                Debug.Log("CardState.Cemetry : " + cardSO.cardName);
-
+                gameObject.layer = LayerMask.NameToLayer("CemetryCard");
                 break;
             default:
                 Debug.LogAssertion("CardState 이상한 것 들어옴!! : " + cardState.ToString());
@@ -165,43 +202,96 @@ public class CardMono : NetworkBehaviour, ITargetable
         }
     }
 
-    // 여기서 RPC로 타겟 다 정해서 전달...?
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    public void RPC_DoEffect(CommandType _commandType)
+    {
+        Vector3 _pos = transform.position;
+        switch (_commandType)
+        {
+            case CommandType.BattleCry:
+                GameManager.actionQueue.Enqueue(() => EffectBattelCry(_pos));
+                break;
+
+            case CommandType.DeathRattle:
+                GameManager.actionQueue.Enqueue(() => EffectDeathRattle(_pos));
+                break;
+            default:
+                break;
+        }
+    }
+
+    public void EffectBattelCry(Vector3 _pos)
+    {
+        GameManager.isAction = false;
+    }
+
+    public void EffectDeathRattle(Vector3 _pos)
+    {
+        owner.gameManager.effectManager.DoDeathRattleEffect(_pos);
+        GameManager.isAction = false;
+    }
+
     public void BattleCry(NetworkId _target)
     {
-        if (!networkObject.HasInputAuthority) return;
-        //battleCry.Execute(this, _target);
+        if (!owner.IsMyTurn()) return;
+        if (battleCryObj == null) return;
         RPC_BattleCry(_target);
     }
 
     [Rpc(RpcSources.All, RpcTargets.All)]
     public void RPC_BattleCry(NetworkId _target)
     {
-        battleCry.Execute(this, _target);
+        battleCry?.Execute(this, _target);
     }
 
-    // 여기서 RPC로 타겟 다 정해서 전달...?
     public void DeathRattle()
     {
-        if (!networkObject.HasInputAuthority) return;
-        //deathRattle.Execute(this, default);
+        if (!owner.IsMyTurn()) return;
+        if (deathRattleObj == null) return;
         RPC_DeathRattle();
     }
 
     [Rpc(RpcSources.All, RpcTargets.All)]
     public void RPC_DeathRattle()
     {
-        deathRattle.Execute(this, default);
+        deathRattle?.Execute(this, default);
     }
 
-    public int Hit(int damage)
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    public void RPC_Command(NetworkObject networkObject)
+    {
+        networkObject.GetComponent<ICommand>()?.ExecuteInRPC(this);
+    }
+
+    public int PredictHit(int damage)
     {
         if (damage <= 0) return -1;
+        return damage;
+    }
+
+    public void Hit(int damage)
+    {
+        if (damage < 0) return;
         currentHealth -= damage;
+    }
+
+    // 여기서 죽음의 메아리 시전가능
+    public bool CheckIsFirstDie()
+    {
+        if (isDie) return false;
         if (currentHealth <= 0)
         {
+            isDie = true;
             owner.DestroyCardOfField(this);
+            return true;
         }
-        return damage;
+        return false;
+    }
+
+    public bool DieIfHit(int damage)
+    {
+        if (damage >= currentHealth) return true;
+        return false;
     }
 
     public void UpdateHit(int damage)
@@ -212,6 +302,7 @@ public class CardMono : NetworkBehaviour, ITargetable
         UpdateFieldText();
         if (visibleHealth <= 0)
         {
+            owner.showField.Remove(uniqueID);
             transform.DOShakePosition(0.5f, 0.5f).SetDelay(0.1f).OnComplete(Die);
         }
     }
@@ -219,9 +310,15 @@ public class CardMono : NetworkBehaviour, ITargetable
     public void Die()
     {
         //임시
-        owner.gameManager.effectManager.DoHitEffect(transform.position);
-        transform.DOMove(networkObject.HasInputAuthority ? new Vector3(11f, -2.5f, 0f) : new Vector3(11f, 2.5f, 0f), 0);
+        owner.gameManager.effectManager.DoDieEffect(transform.position);
+        SetPR(networkObject.HasInputAuthority ? new Vector3(11f, -2.5f, 0f) : new Vector3(11f, 2.5f, 0f), Quaternion.identity, 0);
         owner.gameManager.UpdateFieldCardTooltip();
+        //owner.gameManager.ChangeField();
+    }
+
+    public void SetActivePrediction(bool _active)
+    {
+        diePrediction.SetActive(_active);
     }
 
 
@@ -231,18 +328,29 @@ public class CardMono : NetworkBehaviour, ITargetable
         var _targetObj = owner.gameManager.GetNetworkObject(_uniqueID);
         var _target = _targetObj.GetComponent<ITargetable>();
 
-        int opponentHit = _target.Hit(currentPower);
-        int myHit = Hit(_target.currentPower);
+        int opponentHit = _target.PredictHit(currentPower);
+        int myHit = PredictHit(_target.currentPower);
 
-        Vector3 _origin = transform.position;
+        GameManager.actionQueue.Enqueue(() =>
+        {
+            Vector3 _origin = transform.position;
+            DOTween.Sequence().Append(transform.DOMove(_targetObj.transform.position, 0.2f).SetEase(Ease.OutCirc))
+                .Append(transform.DOMove(_origin, 0.1f))
+                .OnComplete(() => { _target.UpdateHit(opponentHit); UpdateHit(myHit); GameManager.isAction = false; });
+        });
+        _target.Hit(currentPower);
+        Hit(_target.currentPower);
 
-        DOTween.Sequence().Append(transform.DOMove(_targetObj.transform.position, 0.2f).SetEase(Ease.OutCirc))
-            .Append(transform.DOMove(_origin, 0.1f))
-            .OnComplete(() => { _target.UpdateHit(opponentHit); UpdateHit(myHit); });
+        _target.CheckIsFirstDie();
+        CheckIsFirstDie();
+        // 죽메!
+        owner.gameManager.DoDeathRattleOneLayer();
+        owner.gameManager.EnqueueChangeField();
     }
 
     public void SetPR(Vector3 des, Quaternion rot, float _t)
     {
+        DOTween.Kill(transform);
         transform.DOMove(des, _t);
         transform.DORotateQuaternion(rot, _t);
 
@@ -265,19 +373,31 @@ public class CardMono : NetworkBehaviour, ITargetable
     {
         currentPower = cardSO.power;
         currentHealth = cardSO.health;
+        abilityText.text = cardSO.infomation;
 
         visiblePower = currentPower;
         visibleHealth = currentHealth;
         if (cardSO.grade == CardGrade.Lengend)
             bgRender.sprite = legendSprite;
 
-        if (cardSO.battleCry)
-            battleCry = new Hit(2);
-        if (cardSO.deathRattle)
+        if (networkObject.HasInputAuthority)
         {
-            deathRattle = new DrawCard(2);
-            deathRattleIcon.SetActive(true);
+            if (cardSO.battleCry)
+            {
+                battleCryObj = Runner.Spawn(cardSO.battleCry, null, null, Runner.LocalPlayer);
+            }
+            if (cardSO.deathRattle)
+            {
+                deathRattleObj = Runner.Spawn(cardSO.deathRattle, null, null, Runner.LocalPlayer);
+            }
         }
+        if (cardSO.deathRattle)
+            deathRattleIcon.SetActive(true);
+
+        // 도발, 돌진, 천상의 보호막 등 특수 능력 처리
+        specialAbilityEnum = cardSO.speicalAbilityEnum;
+        if (specialAbilityEnum.HasFlag(SpecialAbilityEnum.taunt))
+            tauntIcon.SetActive(true);
 
     }
 
@@ -289,11 +409,38 @@ public class CardMono : NetworkBehaviour, ITargetable
 
     public bool CanBeTarget()
     {
-        return currentHealth > 0;
+        return currentHealth > 0 && !isDie;
+    }
+
+    public bool CanBeDirectAttackTarget()
+    {
+        if (CanBeTarget())
+        {
+            if (owner.IsTauntInField())
+            {
+                if (specialAbilityEnum.HasFlag(SpecialAbilityEnum.taunt)) return true;
+                return false;
+            }
+            return true;
+        }
+        return false;
     }
 
     public NetworkId GetNetworkId()
     {
         return uniqueID;
     }
+
+    public void Predict(GameObject obj)
+    {
+        var iTargetable = obj?.GetComponent<ITargetable>();
+        if (iTargetable == target) return;
+        if (iTargetable != target) target?.SetActivePrediction(false);
+        target = iTargetable;
+
+        if (target == null) return;
+        target.SetActivePrediction(target.DieIfHit(currentPower));
+    }
+
+    public GameObject GetTargetGameObject() => gameObject;
 }

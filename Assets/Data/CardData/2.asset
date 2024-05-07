@@ -18,6 +18,8 @@ MonoBehaviour:
   cost: 1
   power: 2
   health: 1
+  speicalAbilityEnum: 2
+  infomation: "<b>\uB3CC\uC9C4</b>"
+  battleCry: {fileID: 0}
+  deathRattle: {fileID: 0}
   battleCryTarget: -1
-  battleCry: 1
-  deathRattle: 1

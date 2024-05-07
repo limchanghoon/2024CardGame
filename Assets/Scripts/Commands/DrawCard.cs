@@ -1,29 +1,27 @@
-using DG.Tweening.Core.Easing;
 using Fusion;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-public class DrawCard : ICommand
-{
-    int amount;
 
-    public DrawCard(int _amount)
-    {
-        amount = _amount;
-    }
+public class DrawCard : NetworkBehaviour, ICommand
+{
+    [SerializeField] int amount;
 
     public void Execute(CardMono mine, NetworkId target)
     {
-        if (!mine.HasInputAuthority) return;
+        if (!mine.owner.IsMyTurn()) return;
         for (int i = 0; i < amount; i++)
         {
             mine.owner.DrawMyCard();
         }
     }
 
+    public void ExecuteInRPC(ITargetable targetHit)
+    {
+
+    }
+
     public bool IsNeedTarget()
     {
-        throw new System.NotImplementedException();
+        return false;
     }
 }

@@ -18,6 +18,8 @@ MonoBehaviour:
   cost: 3
   power: 3
   health: 2
+  infomation: "<b>\uC8FD\uC74C\uC758 \uBA54\uC544\uB9AC</b> : \uBB34\uC791\uC704
+    \uB300\uC0C1\uC5D0\uAC8C 3\uC758 \uD53C\uD574\uB97C \uB098\uB204\uC5B4 \uC785\uD78C\uB2E4."
+  battleCry: {fileID: 0}
+  deathRattle: {fileID: 6049999063202847296, guid: d8f9f5130e1225e4185ec58a885fc698, type: 3}
   battleCryTarget: -1
-  battleCry: 1
-  deathRattle: 1

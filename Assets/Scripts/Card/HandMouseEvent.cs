@@ -3,7 +3,6 @@ using Fusion;
 using System;
 using System.Collections;
 using Unity.Burst.CompilerServices;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class HandMouseEvent : IMyMouseEvent
@@ -74,9 +73,9 @@ public class HandMouseEvent : IMyMouseEvent
 
     private void GoBack()
     {
-        transform.DOMove(cardMono.originPos, 0.2f);
+        //transform.DOMove(cardMono.originPos, 0.2f);
         expectedLocation = -2;
-        cardMono.owner.OnFieldChanged();
+        cardMono.owner.ChangeShowField();
         cardMono.owner.OnHandChanged();
     }
 
@@ -102,12 +101,14 @@ public class HandMouseEvent : IMyMouseEvent
     private IEnumerator SelectTargetCoroutine()
     {
         cardMono.SetPR(cardMono.owner.GetFieldPos(expectedLocation, cardMono.owner.field.Count + 1), Quaternion.identity, 1f);
+        IPredict iPredict = cardMono.battleCryObj.GetComponent<IPredict>();
         while (true)
         {
             yield return null;
             RaycastHit2D hit;
             bool _isTargetOn = IsTargetOn(out hit);
             cardMono.owner.gameManager.SetLineTarget(cardMono.gameObject.transform.position, Camera.main.ScreenToWorldPoint(Input.mousePosition), true, _isTargetOn);
+            iPredict?.Predict(_isTargetOn ? hit.collider.gameObject : null);
             if (!cardMono.owner.IsMyTurn())
             {
                 GoBack();
@@ -116,13 +117,14 @@ public class HandMouseEvent : IMyMouseEvent
             if(Input.GetMouseButtonDown(0))
             {
                 if (_isTargetOn)
-                    cardMono.owner.SpawnCardOfHand(cardMono.uniqueID, expectedLocation, hit.collider.GetComponent<ITargetable>().GetNetworkId());
+                    cardMono.owner.RPC_SpawnCardOfHand(cardMono.uniqueID, expectedLocation, hit.collider.GetComponent<ITargetable>().GetNetworkId());
                 else
                     GoBack();
                 break;
             }
         }
         cardMono.isDragging = false;
+        iPredict?.Predict(null);
         cardMono.owner.gameManager.SetLineTarget(Vector3.zero, Vector3.zero, false, false);
     }
 
@@ -157,13 +159,13 @@ public class HandMouseEvent : IMyMouseEvent
                     cardMono.StartCoroutine(SelectTargetCoroutine());
                 else
                 {
-                    cardMono.owner.SpawnCardOfHand(cardMono.uniqueID, expectedLocation);
+                    cardMono.owner.RPC_SpawnCardOfHand(cardMono.uniqueID, expectedLocation);
                     cardMono.isDragging = false;
                 }
             }
             else
             {
-                cardMono.owner.SpawnCardOfHand(cardMono.uniqueID, expectedLocation);
+                cardMono.owner.RPC_SpawnCardOfHand(cardMono.uniqueID, expectedLocation);
                 cardMono.isDragging = false;
             }
         }
@@ -183,7 +185,7 @@ public class HandMouseEvent : IMyMouseEvent
         {
             if (!cardMono.isZooming)
             {
-                cardMono.owner.OnFieldChanged();
+                cardMono.owner.ChangeShowField();
                 cardMono.isZooming = true;
                 expectedLocation = -2;
             }
