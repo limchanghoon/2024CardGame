@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.UI;
 
 public class DeckMaker : MonoBehaviour
@@ -20,12 +22,12 @@ public class DeckMaker : MonoBehaviour
     [SerializeField] TextMeshProUGUI[] deckNameTexts;
     [SerializeField] ReUseScrollViewDeck reUseScrollViewDeck;
 
-    [SerializeField] List<CardSO> cardSOs = new List<CardSO>();
+    List<CardSO> cardSOs = new List<CardSO>();
     Dictionary<int, CardSO> cardSO_Map = new Dictionary<int, CardSO>();
 
     readonly int cardMax = 8;
     int currentPage = 0;
-    [SerializeField] List<ValueTuple<CardSO, int>> currentDeckCardSOs = new List<ValueTuple<CardSO, int>>();
+    List<ValueTuple<CardSO, int>> currentDeckCardSOs = new List<ValueTuple<CardSO, int>>();
     [Header("µ¦ ¸ÞÀÌÄ¿")]
     [SerializeField] TextMeshProUGUI[] deckCardTexts;
     [SerializeField] Image[] deckCardImages;
@@ -35,19 +37,28 @@ public class DeckMaker : MonoBehaviour
     [SerializeField] Sprite legendSprite;
     [SerializeField] Sprite normalSprite;
     [SerializeField] Sprite magicSprite;
-
+    AsyncOperationHandle<IList<CardSO>> op;
     private void Awake()
     {
-        for(int i = 0; i < decks.Length; i++)
+        op = Addressables.LoadAssetsAsync<CardSO>("CardData", null);
+        var _data = op.WaitForCompletion();
+
+        for (int i = 0; i < decks.Length; i++)
         {
             decks[i] = myJsonManager.LoadDeckData(i);
             deckNameTexts[i].text = decks[i].DeckName;
         }
 
-        for(int i = 0; i < cardSOs.Count; ++i)
+        foreach(var _cardSO in _data)
         {
-            cardSO_Map.Add(cardSOs[i].cardID, cardSOs[i]);
+            cardSOs.Add(_cardSO);
+            cardSO_Map.Add(_cardSO.cardID, _cardSO);
         }
+    }
+
+    private void OnDestroy()
+    {
+        Addressables.Release(op);
     }
 
     public void SelectDeckSlot(int selected)

@@ -1,5 +1,6 @@
 public enum CommandType
 {
     BattleCry,
-    DeathRattle
+    DeathRattle,
+    Magic
 }

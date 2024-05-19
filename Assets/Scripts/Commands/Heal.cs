@@ -2,7 +2,7 @@ using Fusion;
 using UnityEngine;
 
 
-public class Heal : ICommand
+public class Heal : NetworkBehaviour, ICommand
 {
     int amount;
 
@@ -21,9 +21,10 @@ public class Heal : ICommand
 
     }
 
-    public void ExecuteInRPC(ITargetable targetHit)
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    public void RPC_Execute(NetworkObject _target)
     {
-        throw new System.NotImplementedException();
+
     }
 
     public bool IsNeedTarget()

@@ -6,6 +6,7 @@ using UnityEngine;
 using System.Linq;
 using UnityEngine.SceneManagement;
 using System.IO;
+using UnityEngine.AddressableAssets;
 
 public class RunnerHelper : MonoBehaviour, INetworkRunnerCallbacks
 {
@@ -142,7 +143,7 @@ public class RunnerHelper : MonoBehaviour, INetworkRunnerCallbacks
 
     public void OnSceneLoadDone(NetworkRunner runner)
     {
-        Debug.Log("OnSceneLoadDone");
+        Debug.Log("OnSceneLoadDone : " + runner.SceneManager.MainRunnerScene.buildIndex.ToString());
         if (runner.SceneManager.MainRunnerScene.buildIndex == 1)
         {
             // 임시로 0번 덱으로 시작
@@ -162,16 +163,33 @@ public class RunnerHelper : MonoBehaviour, INetworkRunnerCallbacks
             var loadedData = JsonUtility.FromJson<DeckData>(loadedJson);
             loadedData.Shuffle();
             Player player = spawnedCharacter.GetComponent<Player>();
+
             for (int i = 0; i < 30; ++i)
             {
-                var _netObject = runner.Spawn(player._cardPrefab, null, null, runner.LocalPlayer, (_runner, _obj) =>
+                var op = Addressables.LoadAssetAsync<CardSO>("Assets/Data/CardData/" + loadedData.cardIDs[i].ToString() + ".asset");
+                CardSO _data = op.WaitForCompletion();
+                if (_data.cardType == CardType.Minion) {
+                    runner.Spawn(player._MinionCardPrefab, null, null, runner.LocalPlayer, (_runner, _obj) =>
+                    {
+                        CardMono cardMono = _obj.GetComponent<CardMono>();
+                        cardMono.uniqueID = _obj.Id;
+                        cardMono.cardID = loadedData.cardIDs[i];
+                        cardMono.OwnerPlayer = spawnedCharacter;
+                        player.deck.Add(_obj.Id);
+                    });
+                }
+                else if (_data.cardType == CardType.Magic)
                 {
-                    CardMono cardMono = _obj.GetComponent<CardMono>();
-                    cardMono.uniqueID = _obj.Id;
-                    cardMono.cardID = loadedData.cardIDs[i];
-                    cardMono.Target = spawnedCharacter;
-                    player.deck.Add(_obj.Id);
-                });
+                    runner.Spawn(player._MagicCardPrefab, null, null, runner.LocalPlayer, (_runner, _obj) =>
+                    {
+                        CardMono cardMono = _obj.GetComponent<CardMono>();
+                        cardMono.uniqueID = _obj.Id;
+                        cardMono.cardID = loadedData.cardIDs[i];
+                        cardMono.OwnerPlayer = spawnedCharacter;
+                        player.deck.Add(_obj.Id);
+                    });
+                }
+                Addressables.Release(op);
             }
         }
     }

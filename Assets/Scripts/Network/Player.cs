@@ -19,8 +19,9 @@ public class Player : NetworkBehaviour
             return _gameManager;
         }
     }
-
-    public GameObject _cardPrefab;
+    public HeroMono heroMono { get; private set; }
+    public GameObject _MinionCardPrefab;
+    public GameObject _MagicCardPrefab;
     public NetworkObject networkObject { get; private set; }
 
     //[Networked, Capacity(7), OnChangedRender(nameof(OnFieldChanged))] public NetworkLinkedList<NetworkId> field { get; }
@@ -34,6 +35,7 @@ public class Player : NetworkBehaviour
     private void Awake()
     {
         DontDestroyOnLoad(this);
+        heroMono = GetComponent<HeroMono>();
         networkObject = GetComponent<NetworkObject>();
     }
 
@@ -63,7 +65,18 @@ public class Player : NetworkBehaviour
     }
 
     [Rpc(RpcSources.All, RpcTargets.All)]
-    public void RPC_SpawnCardOfHand(NetworkId _uniqueID, int _location, NetworkId _target = default)
+    public void RPC_UseMagicOfHand(NetworkId _uniqueID, NetworkId _target = default)
+    {
+        hand.Remove(_uniqueID);
+
+        CardMono_Magic _cardMono = (CardMono_Magic)gameManager.GetCard(_uniqueID);
+        _cardMono.SetPR(new Vector3(9999, 9999, 9999), Quaternion.identity, 0);
+        GameManager.actionQueue.Enqueue(() => { gameManager.ShowCurrentAnimCard(_cardMono); GameManager.isAction = false; });
+        _cardMono.FireMagic(_target);
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    public void RPC_SpawnMinionOfHand(NetworkId _uniqueID, int _location, NetworkId _target = default)
     {
         if (field.Count == field.Capacity)
         {
@@ -81,16 +94,16 @@ public class Player : NetworkBehaviour
             field.Add(_uniqueID);
         }
 
-        CardMono _cardMono = gameManager.GetCard(_uniqueID);
+        CardMono_Minion _cardMono = (CardMono_Minion)gameManager.GetCard(_uniqueID);
         _cardMono.SetPR(new Vector3(9999, 9999, 9999), Quaternion.identity, 0);
         _cardMono.ChangeCardState(CardState.Field);
-        GameManager.actionQueue.Enqueue(() => SpawnCardOfHand(_uniqueID, _location, _target));
+        GameManager.actionQueue.Enqueue(() => SpawnMinionOfHand(_uniqueID, _location, _target));
         gameManager.EnqueueChangeField();
         // 전투의 함성
         _cardMono.BattleCry(_target);
     }
 
-    private void SpawnCardOfHand(NetworkId _uniqueID, int _location, NetworkId _target = default)
+    private void SpawnMinionOfHand(NetworkId _uniqueID, int _location, NetworkId _target = default)
     {
         if (_location < field.Count)
         {
@@ -100,13 +113,13 @@ public class Player : NetworkBehaviour
         {
             showField.Add(_uniqueID);
         }
-        CardMono _cardMono = gameManager.GetCard(_uniqueID);
-        _cardMono.SetPR(GetFieldPos(_location, showField.Count), Quaternion.identity, 0);
-        gameManager.ShowCurrentAnimCard(_cardMono, new Vector3(-10, 0, 0));
+        CardMono_Minion _cardMono_Minion = (CardMono_Minion)gameManager.GetCard(_uniqueID);
+        _cardMono_Minion.SetPR(GetFieldPos(_location, showField.Count), Quaternion.identity, 0);
+        gameManager.ShowCurrentAnimCard(_cardMono_Minion);
         GameManager.isAction = false;
     }
 
-    public void DestroyCardOfField(CardMono _cardMono)
+    public void DestroyCardOfField(CardMono_Minion _cardMono)
     {
         NetworkId _uniqueID = _cardMono.uniqueID;
 
@@ -129,11 +142,6 @@ public class Player : NetworkBehaviour
         return gameManager.IsMyTurn();
     }
 
-    public void ShowFieldCardTooltip(CardMono cardMono)
-    {
-        gameManager.ShowFieldCardTooltip(cardMono, cardMono.transform.position);
-    }
-
     public void AddToCardDictionary(NetworkId _networkId, CardMono _cardMono)
     {
         if (!cardDictionary.ContainsKey(_networkId))
@@ -152,7 +160,7 @@ public class Player : NetworkBehaviour
 
         for (int i = 0; i < field.Count; i++)
         {
-            if (GetMyCard(field[i]).specialAbilityEnum.HasFlag(SpecialAbilityEnum.taunt)) 
+            if (((CardMono_Minion)GetMyCard(field[i])).specialAbilityEnum.HasFlag(SpecialAbilityEnum.taunt)) 
                 return true;
         }
         return false;

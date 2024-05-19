@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 308589a7783e36c4797fe3d5594aaf31, type: 3}
+  m_Name: 20
+  m_EditorClassIdentifier: 
+  cardID: 20
+  cardName: "\uBD88\uAE30\uB465"
+  cardType: 1
+  grade: 0
+  cost: 7
+  power: 0
+  health: 0
+  infomation: "\uBAA8\uB4E0 \uC801 \uD558\uC218\uC778\uC5D0\uAC8C \uD53C\uD574\uB97C
+    4 \uC90D\uB2C8\uB2E4."
+  speicalAbilityEnum: 0
+  battleCry: {fileID: 0}
+  battleCryTarget: -1
+  deathRattle: {fileID: 0}
+  magicTarget: 0
+  magic: {fileID: 8067344002431140743, guid: 20583618fb71a25459679832d28a6e43, type: 3}

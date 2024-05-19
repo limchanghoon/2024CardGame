@@ -58,12 +58,6 @@ public class HeroMono : NetworkBehaviour, ITargetable
         else return TargetType.OpponentHero;
     }
 
-    [Rpc(RpcSources.All, RpcTargets.All)]
-    public void RPC_Command(NetworkObject networkObject)
-    {
-        networkObject.GetComponent<ICommand>()?.ExecuteInRPC(this);
-    }
-
     public int PredictHit(int damage)
     {
         if (damage < 0) return -1;

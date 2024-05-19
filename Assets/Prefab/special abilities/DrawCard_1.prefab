@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4396637721205737289}
   - component: {fileID: -8621308805712877274}
-  - component: {fileID: 2832963208988168338}
+  - component: {fileID: 7724163691202090218}
   m_Layer: 0
   m_Name: DrawCard_1
   m_TagString: Untagged
@@ -46,7 +46,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   amount: 1
---- !u!114 &2832963208988168338
+--- !u!114 &7724163691202090218
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -58,7 +58,7 @@ MonoBehaviour:
   m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  SortKey: 4184072597
+  SortKey: 491755247
   ObjectInterest: 1
   Flags: 262145
   NestedObjects: []

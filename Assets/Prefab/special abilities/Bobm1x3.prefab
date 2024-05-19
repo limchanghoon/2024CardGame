@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4736927583898289630}
   - component: {fileID: 3591685831618171802}
-  - component: {fileID: 1979723218602042044}
+  - component: {fileID: -1489266044310363087}
   m_Layer: 0
   m_Name: Bobm1x3
   m_TagString: Untagged
@@ -49,7 +49,7 @@ MonoBehaviour:
   damage: 1
   randomCount: 3
   bobm: {fileID: 2457630144602951739, guid: 1f7342718ce120b4b92c4f358db9f877, type: 3}
---- !u!114 &1979723218602042044
+--- !u!114 &-1489266044310363087
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -61,7 +61,7 @@ MonoBehaviour:
   m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  SortKey: 3987441469
+  SortKey: 1417772390
   ObjectInterest: 1
   Flags: 262145
   NestedObjects: []

@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using TMPro;
 using UnityEngine;
@@ -26,7 +27,6 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
     [SerializeField] FieldCardTooltip fieldCardTooltip;
     [SerializeField] FieldCardTooltip currentAnimCard;
     [SerializeField] LinePainter linePainter;
-    [SerializeField] GameObject _cardPrefab;
 
     bool isReady = false;
     int readyCount = 0;
@@ -165,6 +165,9 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
         heroMonos[0].transform.DOMove(heroMonos[0].HasInputAuthority ? new Vector3(0, -2.5f, 1) : new Vector3(0, 2.5f, 1), 1f);
         heroMonos[1].transform.DOMove(heroMonos[1].HasInputAuthority ? new Vector3(0, -2.5f, 1) : new Vector3(0, 2.5f, 1), 1f);
     }
+
+
+
 
     [Rpc(RpcSources.All, RpcTargets.All)]
     private void RPC_StartGame()
@@ -309,9 +312,9 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
         return order.Get(current) == Runner.LocalPlayer.PlayerId;
     }
 
-    public void ShowFieldCardTooltip(CardMono cardMono, Vector3 _pos)
+    public void ShowFieldCardTooltip(CardMono_Minion cardMono_Minion, Vector3 _pos)
     {
-        fieldCardTooltip.Show(cardMono, _pos);
+        fieldCardTooltip.Show(cardMono_Minion, _pos);
     }
 
     public void DisalbeFieldCardTooltip()
@@ -324,19 +327,9 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
         fieldCardTooltip.UpdateUI();
     }
 
-    public void ShowCurrentAnimCard(CardMono cardMono, Vector3 _pos)
+    public void ShowCurrentAnimCard(CardMono _cardMono)
     {
-        currentAnimCard.Show(cardMono, _pos);
-    }
-
-    public void DisalbeCurrentAnimCard()
-    {
-        currentAnimCard.Disable();
-    }
-
-    public void UpdateCurrentAnimCard()
-    {
-        currentAnimCard.UpdateUI();
+        currentAnimCard.Show(_cardMono, new Vector3(-10, 0, 0));
     }
 
     [Rpc(RpcSources.All, RpcTargets.All)]

@@ -5,7 +5,6 @@ public interface ITargetable
 {
     void SetActivePrediction(bool _active);
     bool DieIfHit(int damage);
-    void RPC_Command(NetworkObject _networkObject);
     void Hit(int damage);
     bool CheckIsFirstDie();
     int PredictHit(int damage);
@@ -17,6 +16,6 @@ public interface ITargetable
     bool CanBeDirectAttackTarget();
     GameObject GetTargetGameObject();
 
-    int currentPower { get; set; }
-    int currentHealth { get; set; }
+    public int currentPower { get; set; }
+    public int currentHealth { get; set; }
 }

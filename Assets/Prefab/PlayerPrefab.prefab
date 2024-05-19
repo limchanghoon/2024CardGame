@@ -206,7 +206,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1388e5bce84848847be769be336835a5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _cardPrefab: {fileID: 1046453762258197063, guid: e21027c0becac1340b4bde607ebe0335, type: 3}
+  _MinionCardPrefab: {fileID: 1046453762258197063, guid: e21027c0becac1340b4bde607ebe0335, type: 3}
+  _MagicCardPrefab: {fileID: 5033057423948852124, guid: 68877974f4082eb4fa0d987339ee688a, type: 3}
   showField: []
   field: []
   _hand: []

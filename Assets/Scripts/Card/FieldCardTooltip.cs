@@ -15,6 +15,9 @@ public class FieldCardTooltip : MonoBehaviour
     [SerializeField] TextMeshPro healthText;
     [SerializeField] TextMeshPro abilityText;
 
+    [SerializeField] GameObject card_minion;
+    [SerializeField] GameObject card_magic;
+
     CardMono current;
     [SerializeField] float zDepth;
     [SerializeField] bool isAutoClose;
@@ -59,21 +62,59 @@ public class FieldCardTooltip : MonoBehaviour
 
     public void UpdateUI()
     {
-        if(current == null || current.currentHealth <= 0)
+        if(current == null)
         {
             Disable();
             return;
         }
-        if (current.cardSO.grade == CardGrade.Lengend)
-            bgRender.sprite = legend;
+
+        if(current is CardMono_Minion)
+        {
+            CardMono_Minion cardMono_Minion = current as CardMono_Minion;
+            if(cardMono_Minion.currentHealth <= 0)
+            {
+                Disable();
+                return;
+            }
+            if (card_minion != null && card_magic != null)
+            {
+                card_minion.SetActive(true);
+                card_magic.SetActive(false);
+            }
+            if (cardMono_Minion.cardSO.grade == CardGrade.Lengend)
+                bgRender.sprite = legend;
+            else
+                bgRender.sprite = normal;
+
+            nameText.rectTransform.anchoredPosition.Set(0, -0.3f);
+
+            nameText.text = cardMono_Minion.cardSO.cardName;
+            costText.text = cardMono_Minion.cardSO.cost.ToString();
+            powerText.text = cardMono_Minion.currentPower.ToString();
+            healthText.text = cardMono_Minion.currentHealth.ToString();
+            abilityText.text = cardMono_Minion.cardSO.infomation.ToString();
+        }
         else
-            bgRender.sprite = normal;
-        nameText.text = current.cardSO.cardName;
-        costText.text = current.cardSO.cost.ToString();
-        powerText.text = current.currentPower.ToString();
-        healthText.text = current.currentHealth.ToString();
-        abilityText.text = current.cardSO.infomation.ToString();
+        {
+            CardMono_Magic cardMono_Magic = current as CardMono_Magic;
+            if (cardMono_Magic == null)
+            {
+                Disable();
+                return;
+            }
+            if (card_minion != null && card_magic != null)
+            {
+                card_minion.SetActive(false);
+                card_magic.SetActive(true);
+            }
+            nameText.rectTransform.anchoredPosition.Set(0, -0.15f);
+
+            nameText.text = cardMono_Magic.cardSO.cardName;
+            costText.text = cardMono_Magic.cardSO.cost.ToString();
+            abilityText.text = cardMono_Magic.cardSO.infomation.ToString();
+        }
     }
+
 
     private void OnMouseDown()
     {

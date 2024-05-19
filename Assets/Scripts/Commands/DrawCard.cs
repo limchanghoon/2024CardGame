@@ -15,7 +15,8 @@ public class DrawCard : NetworkBehaviour, ICommand
         }
     }
 
-    public void ExecuteInRPC(ITargetable targetHit)
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    public void RPC_Execute(NetworkObject _target)
     {
 
     }
