@@ -22,7 +22,7 @@ MonoBehaviour:
   infomation: "\uD53C\uD574\uB97C 6 \uC90D\uB2C8\uB2E4."
   speicalAbilityEnum: 0
   battleCry: {fileID: 0}
-  battleCryTarget: -1
+  battleCryTarget: 0
   deathRattle: {fileID: 0}
   magicTarget: -1
   magic: {fileID: 8067344002431140743, guid: a6d3d12670ed0d7409d701ec82a1045e, type: 3}

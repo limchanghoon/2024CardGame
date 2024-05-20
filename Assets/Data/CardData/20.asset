@@ -23,7 +23,7 @@ MonoBehaviour:
     4 \uC90D\uB2C8\uB2E4."
   speicalAbilityEnum: 0
   battleCry: {fileID: 0}
-  battleCryTarget: -1
+  battleCryTarget: 0
   deathRattle: {fileID: 0}
   magicTarget: 0
   magic: {fileID: 8067344002431140743, guid: 20583618fb71a25459679832d28a6e43, type: 3}

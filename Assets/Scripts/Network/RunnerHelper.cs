@@ -16,6 +16,9 @@ public class RunnerHelper : MonoBehaviour, INetworkRunnerCallbacks
     public BasicSpawner basicSpawner { get; set; }
 
 
+    public GameObject[] heroAbilities;
+
+
     #region INetworkRunnerCallbacks콜백함수
 
     public void OnConnectedToServer(NetworkRunner runner)
@@ -79,14 +82,14 @@ public class RunnerHelper : MonoBehaviour, INetworkRunnerCallbacks
         {
             if (runner.IsSceneAuthority)
             {
-                basicSpawner.btn_Join.SetActive(false);
+                basicSpawner.btn_SelectDeck.SetActive(false);
                 basicSpawner.btn_Shutdown.SetActive(true);
                 basicSpawner.btn_Start.SetActive(true);
                 basicSpawner.roomName.text = "방장 : " + runner.ActivePlayers.Count().ToString() + "/" + runner.Config.Simulation.PlayerCount.ToString();
             }
             else
             {
-                basicSpawner.btn_Join.SetActive(false);
+                basicSpawner.btn_SelectDeck.SetActive(false);
                 basicSpawner.btn_Shutdown.SetActive(true);
                 basicSpawner.btn_Start.SetActive(false);
                 basicSpawner.roomName.text = "게스트 : " + runner.ActivePlayers.Count().ToString() + "/" + runner.Config.Simulation.PlayerCount.ToString();
@@ -106,14 +109,14 @@ public class RunnerHelper : MonoBehaviour, INetworkRunnerCallbacks
         {
             if (runner.IsSceneAuthority)
             {
-                basicSpawner.btn_Join.SetActive(false);
+                basicSpawner.btn_SelectDeck.SetActive(false);
                 basicSpawner.btn_Shutdown.SetActive(true);
                 basicSpawner.btn_Start.SetActive(true);
                 basicSpawner.roomName.text = "방장 : " + runner.ActivePlayers.Count().ToString() + "/" + runner.Config.Simulation.PlayerCount.ToString();
             }
             else
             {
-                basicSpawner.btn_Join.SetActive(false);
+                basicSpawner.btn_SelectDeck.SetActive(false);
                 basicSpawner.btn_Shutdown.SetActive(true);
                 basicSpawner.btn_Start.SetActive(false);
                 basicSpawner.roomName.text = "게스트 : " + runner.ActivePlayers.Count().ToString() + "/" + runner.Config.Simulation.PlayerCount.ToString();
@@ -146,8 +149,7 @@ public class RunnerHelper : MonoBehaviour, INetworkRunnerCallbacks
         Debug.Log("OnSceneLoadDone : " + runner.SceneManager.MainRunnerScene.buildIndex.ToString());
         if (runner.SceneManager.MainRunnerScene.buildIndex == 1)
         {
-            // 임시로 0번 덱으로 시작
-            int slotIdx = 0;
+            int slotIdx = PlayerPrefs.GetInt("SelectedIndex");
             string dirPath = Path.Combine(Application.persistentDataPath, "Deck");
             if (!Directory.Exists(dirPath))
                 Directory.CreateDirectory(dirPath);
@@ -160,20 +162,26 @@ public class RunnerHelper : MonoBehaviour, INetworkRunnerCallbacks
             }
 
             string loadedJson = File.ReadAllText(path);
-            var loadedData = JsonUtility.FromJson<DeckData>(loadedJson);
-            loadedData.Shuffle();
+            var loadedDeckData = JsonUtility.FromJson<DeckData>(loadedJson);
+            loadedDeckData.Shuffle();
             Player player = spawnedCharacter.GetComponent<Player>();
+
+            runner.Spawn(heroAbilities[(int)loadedDeckData.heroType], null, null, runner.LocalPlayer, (_runner, _obj) =>
+            {
+                HeroAbility heroAbility = _obj.GetComponent<HeroAbility>();
+                heroAbility.OwnerPlayer = spawnedCharacter;
+            });
 
             for (int i = 0; i < 30; ++i)
             {
-                var op = Addressables.LoadAssetAsync<CardSO>("Assets/Data/CardData/" + loadedData.cardIDs[i].ToString() + ".asset");
+                var op = Addressables.LoadAssetAsync<CardSO>("Assets/Data/CardData/" + loadedDeckData.cardIDs[i].ToString() + ".asset");
                 CardSO _data = op.WaitForCompletion();
                 if (_data.cardType == CardType.Minion) {
                     runner.Spawn(player._MinionCardPrefab, null, null, runner.LocalPlayer, (_runner, _obj) =>
                     {
                         CardMono cardMono = _obj.GetComponent<CardMono>();
                         cardMono.uniqueID = _obj.Id;
-                        cardMono.cardID = loadedData.cardIDs[i];
+                        cardMono.cardID = loadedDeckData.cardIDs[i];
                         cardMono.OwnerPlayer = spawnedCharacter;
                         player.deck.Add(_obj.Id);
                     });
@@ -184,7 +192,7 @@ public class RunnerHelper : MonoBehaviour, INetworkRunnerCallbacks
                     {
                         CardMono cardMono = _obj.GetComponent<CardMono>();
                         cardMono.uniqueID = _obj.Id;
-                        cardMono.cardID = loadedData.cardIDs[i];
+                        cardMono.cardID = loadedDeckData.cardIDs[i];
                         cardMono.OwnerPlayer = spawnedCharacter;
                         player.deck.Add(_obj.Id);
                     });

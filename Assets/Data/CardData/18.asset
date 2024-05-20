@@ -14,11 +14,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cardID: 18
   cardName: "\uADF8\uB0E5 \uBA40\uB85D"
+  cardType: 0
   grade: 0
   cost: 1
   power: 2
   health: 1
   infomation: 
+  speicalAbilityEnum: 0
   battleCry: {fileID: 0}
+  battleCryTarget: 0
   deathRattle: {fileID: 0}
-  battleCryTarget: -1
+  magicTarget: 0
+  magic: {fileID: 0}

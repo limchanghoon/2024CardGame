@@ -2,11 +2,13 @@
 public class DeckData
 {
     public string DeckName;
+    public HeroType heroType;
     public int[] cardIDs;
 
     public DeckData()
     {
         DeckName = "ºó µ¦";
+        heroType = HeroType.NULL;
         cardIDs = new int[30];
     }
 
@@ -24,5 +26,21 @@ public class DeckData
             cardIDs[random1] = cardIDs[random2];
             cardIDs[random2] = temp;
         }
+    }
+
+    public int CountOfCards()
+    {
+        int ans = 0;
+        for(int i = 0;i< cardIDs.Length; ++i)
+        {
+            if(cardIDs[i] > 0 ) ans++;
+        }
+        return ans;
+    }
+
+    public bool IsCompleted()
+    {
+        if (CountOfCards() == cardIDs.Length) return true;
+        return false;
     }
 }

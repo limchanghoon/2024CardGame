@@ -3,12 +3,10 @@ using UnityEngine;
 public class FieldMouseEvent_Minion : IMyMouseEvent
 {
     CardMono_Minion cardMono_Minion;
-    Transform transform;
 
     public FieldMouseEvent_Minion(CardMono_Minion _cardMono)
     {
         cardMono_Minion = _cardMono;
-        transform = _cardMono.transform;
     }
 
     private bool IsTargetOn(out RaycastHit2D hit)

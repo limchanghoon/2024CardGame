@@ -155,7 +155,7 @@ public class HandMouseEvent_Minion : IMyMouseEvent
         }
         else
         {
-            if (cardMono_Minion.battleCry != null &&cardMono_Minion.battleCry.IsNeedTarget())
+            if (cardMono_Minion.battleCry != null && cardMono_Minion.battleCry.IsNeedTarget())
             {
                 if (cardMono_Minion.cardSO.IsTargetExist(CommandType.BattleCry, cardMono_Minion.owner.gameManager))
                     cardMono_Minion.StartCoroutine(SelectTargetCoroutine());

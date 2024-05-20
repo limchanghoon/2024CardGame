@@ -50,24 +50,17 @@ public class CardSO : ScriptableObject
         if (curTargetType == 0) return false;
 
         if ((int)curTargetType == -1)
-        {
-            if (gameManager.heroMonos[0].CanBeTarget() || gameManager.heroMonos[1].CanBeTarget()) return true;
-            Player OpponentPlayer = gameManager.GetOppenetPlayer();
-            for (int i = 0; i < OpponentPlayer.field.Count; ++i)
-            {
-                if (((CardMono_Minion)gameManager.GetCard(OpponentPlayer.field[i])).CanBeTarget()) return true;
-            }
-            Player MyPlayer = gameManager.GetMyPlayer();
-            for (int i = 0; i < MyPlayer.field.Count; ++i)
-            {
-                if (((CardMono_Minion)gameManager.GetCard(MyPlayer.field[i])).CanBeTarget()) return true;
-            }
-            return false;
-        }
+            curTargetType = TargetType.All;
 
         switch (curTargetType)
         {
-            case TargetType.MyMinion:
+            case TargetType.All:
+                if (gameManager.heroMonos[0].CanBeTarget() || gameManager.heroMonos[1].CanBeTarget()) return true;
+                Player OpponentPlayer = gameManager.GetOppenetPlayer();
+                for (int i = 0; i < OpponentPlayer.field.Count; ++i)
+                {
+                    if (((CardMono_Minion)gameManager.GetCard(OpponentPlayer.field[i])).CanBeTarget()) return true;
+                }
                 Player MyPlayer = gameManager.GetMyPlayer();
                 for (int i = 0; i < MyPlayer.field.Count; ++i)
                 {
@@ -75,8 +68,16 @@ public class CardSO : ScriptableObject
                 }
                 return false;
 
+            case TargetType.MyMinion:
+                MyPlayer = gameManager.GetMyPlayer();
+                for (int i = 0; i < MyPlayer.field.Count; ++i)
+                {
+                    if (((CardMono_Minion)gameManager.GetCard(MyPlayer.field[i])).CanBeTarget()) return true;
+                }
+                return false;
+
             case TargetType.OpponentMinion:
-                Player OpponentPlayer = gameManager.GetOppenetPlayer();
+                OpponentPlayer = gameManager.GetOppenetPlayer();
                 for (int i = 0; i < OpponentPlayer.field.Count; ++i)
                 {
                     if (((CardMono_Minion)gameManager.GetCard(OpponentPlayer.field[i])).CanBeTarget()) return true;

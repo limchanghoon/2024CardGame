@@ -2,7 +2,6 @@ using DG.Tweening;
 using Fusion;
 using System;
 using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -79,7 +78,13 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
                 order.Set(idx++, playerRef_.PlayerId);
             }
 
-            StartCoroutine(CheckPlayersCoroutine());
+            //StartCoroutine(CheckPlayersCoroutine());
+        }
+        else
+        {
+            // 무조건 로컬 플레이어가 아닌 유저가 뒤에 생성된다면 이렇게 해도 됨.
+            RPC_SettingAfterAllPlayerSpawned();
+            RPC_StartGame();
         }
     }
 
@@ -88,7 +93,7 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
         while (readyCount < 2)
         {
             RPC_CheckPlayers();
-            yield return new WaitForSeconds(1f);
+            yield return new WaitForSeconds(0.1f);
         }
         RPC_SettingAfterAllPlayerSpawned();
         RPC_StartGame();
@@ -159,8 +164,8 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
             heroMonos[1] = playerObjs[0].GetComponent<HeroMono>();
         }
 
-        players[0].OnHandChanged();
-        players[1].OnHandChanged();
+        //players[0].OnHandChanged();
+        //players[1].OnHandChanged();
 
         heroMonos[0].transform.DOMove(heroMonos[0].HasInputAuthority ? new Vector3(0, -2.5f, 1) : new Vector3(0, 2.5f, 1), 1f);
         heroMonos[1].transform.DOMove(heroMonos[1].HasInputAuthority ? new Vector3(0, -2.5f, 1) : new Vector3(0, 2.5f, 1), 1f);

@@ -3,7 +3,6 @@ using DG.Tweening.Core.Easing;
 using Fusion;
 using System.Collections.Generic;
 using System.Linq;
-using System.Xml;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -20,9 +19,10 @@ public class Player : NetworkBehaviour
         }
     }
     public HeroMono heroMono { get; private set; }
+    public NetworkObject networkObject { get; private set; }
+
     public GameObject _MinionCardPrefab;
     public GameObject _MagicCardPrefab;
-    public NetworkObject networkObject { get; private set; }
 
     //[Networked, Capacity(7), OnChangedRender(nameof(OnFieldChanged))] public NetworkLinkedList<NetworkId> field { get; }
     public List<NetworkId> showField = new List<NetworkId>(7);
@@ -73,6 +73,26 @@ public class Player : NetworkBehaviour
         _cardMono.SetPR(new Vector3(9999, 9999, 9999), Quaternion.identity, 0);
         GameManager.actionQueue.Enqueue(() => { gameManager.ShowCurrentAnimCard(_cardMono); GameManager.isAction = false; });
         _cardMono.FireMagic(_target);
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    public void RPC_SpawnNewObject(NetworkObject newNetworkObject, int _location)
+    {
+        if (field.Count == field.Capacity)
+        {
+            Debug.LogAssertion("ÇÊµå FULL");
+            return;
+        }
+
+        CardMono_Minion _cardMono = (CardMono_Minion)newNetworkObject.GetComponent<CardMono>();
+
+        field.Add(newNetworkObject.Id);
+        AddToCardDictionary(newNetworkObject.Id, _cardMono);
+        
+        _cardMono.SetPR(new Vector3(9999, 9999, 9999), Quaternion.identity, 0);
+        _cardMono.ChangeCardState(CardState.Field);
+        GameManager.actionQueue.Enqueue(() => SpawnMinionOfHand(newNetworkObject.Id, _location, default));
+        gameManager.EnqueueChangeField();
     }
 
     [Rpc(RpcSources.All, RpcTargets.All)]

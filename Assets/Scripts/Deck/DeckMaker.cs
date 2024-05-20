@@ -37,6 +37,8 @@ public class DeckMaker : MonoBehaviour
     [SerializeField] Sprite legendSprite;
     [SerializeField] Sprite normalSprite;
     [SerializeField] Sprite magicSprite;
+
+    [SerializeField] TMP_Dropdown heroTypeDropdown;
     AsyncOperationHandle<IList<CardSO>> op;
     private void Awake()
     {
@@ -71,6 +73,8 @@ public class DeckMaker : MonoBehaviour
         currentPage = 0;
         ShowPage(0);
         currentDeckCardSOs.Clear();
+
+        heroTypeDropdown.value = decks[currentDeck].heroType == HeroType.NULL ? 0 : (int)decks[currentDeck].heroType;
         // decks[currentDeck]  => currentDeckCardSOs
         for (int i = 0; i < decks[currentDeck].cardIDs.Length; i++)
         {
@@ -106,6 +110,7 @@ public class DeckMaker : MonoBehaviour
         deckNameTexts[currentDeck].text = decks[currentDeck].DeckName;
 
         // currentDeckCardSOs => decks[currentDeck]
+        decks[currentDeck].heroType = (HeroType)heroTypeDropdown.value;
         int idx = 0;
         for(int i = 0; i < currentDeckCardSOs.Count; i++)
         {
@@ -136,7 +141,9 @@ public class DeckMaker : MonoBehaviour
             if (currentPage * cardMax + i < cardSOs.Count)
             {
                 deckCardTexts[i].text = cardSOs[currentPage * cardMax + i].cardName;
-                if (cardSOs[currentPage * cardMax + i].grade == CardGrade.Lengend)
+                if (cardSOs[currentPage * cardMax + i].cardType == CardType.Magic)
+                    deckCardImages[i].sprite = magicSprite;
+                else if (cardSOs[currentPage * cardMax + i].grade == CardGrade.Lengend)
                     deckCardImages[i].sprite = legendSprite;
                 else
                     deckCardImages[i].sprite = normalSprite;

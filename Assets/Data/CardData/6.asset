@@ -14,12 +14,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cardID: 6
   cardName: "\uD0B9\uD06C\uB7A9"
+  cardType: 0
   grade: 1
   cost: 5
   power: 7
   health: 2
-  speicalAbilityEnum: 1
   infomation: "<b>\uB3C4\uBC1C</b>"
+  speicalAbilityEnum: 1
   battleCry: {fileID: 0}
+  battleCryTarget: 0
   deathRattle: {fileID: 0}
-  battleCryTarget: -1
+  magicTarget: 0
+  magic: {fileID: 0}

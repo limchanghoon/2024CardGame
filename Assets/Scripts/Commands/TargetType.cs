@@ -13,4 +13,5 @@ public enum TargetType
     Hero = MyHero | OpponentHero,
     Mine = MyMinion | MyHero,
     Opponent = OpponentMinion | OpponentHero,
+    All = int.MaxValue
 }

@@ -57,7 +57,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 674ccfa2f280f6f409bc0d5745192f93, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GMPrefab: {fileID: 7577815280631940124, guid: 424eea37ea8e1a440b26e0e88a40a155, type: 3}
   _playerPrefab:
     RawGuidValue: fca4cfbfc9df8ae4d8caca003ee4918d
-  basicSpawner: {fileID: 0}
+  heroAbilities:
+  - {fileID: 342219166741672454, guid: b2e1c6f38ce1a824f97e8d1eff0ebf11, type: 3}
+  - {fileID: 342219166741672454, guid: b2e1c6f38ce1a824f97e8d1eff0ebf11, type: 3}
+  - {fileID: 342219166741672454, guid: b2e1c6f38ce1a824f97e8d1eff0ebf11, type: 3}
+  - {fileID: 342219166741672454, guid: b2e1c6f38ce1a824f97e8d1eff0ebf11, type: 3}
+  - {fileID: 342219166741672454, guid: b2e1c6f38ce1a824f97e8d1eff0ebf11, type: 3}
+  - {fileID: 342219166741672454, guid: b2e1c6f38ce1a824f97e8d1eff0ebf11, type: 3}
+  - {fileID: 342219166741672454, guid: b2e1c6f38ce1a824f97e8d1eff0ebf11, type: 3}
+  - {fileID: 342219166741672454, guid: b2e1c6f38ce1a824f97e8d1eff0ebf11, type: 3}
+  - {fileID: 342219166741672454, guid: b2e1c6f38ce1a824f97e8d1eff0ebf11, type: 3}
+  - {fileID: 342219166741672454, guid: b2e1c6f38ce1a824f97e8d1eff0ebf11, type: 3}
