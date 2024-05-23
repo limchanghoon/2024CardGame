@@ -22,21 +22,16 @@ public class DeckMaker : MonoBehaviour
     [SerializeField] TextMeshProUGUI[] deckNameTexts;
     [SerializeField] ReUseScrollViewDeck reUseScrollViewDeck;
 
-    List<CardSO> cardSOs = new List<CardSO>();
+    public List<CardSO> cardSOs = new List<CardSO>();
     Dictionary<int, CardSO> cardSO_Map = new Dictionary<int, CardSO>();
 
     readonly int cardMax = 8;
     int currentPage = 0;
     List<ValueTuple<CardSO, int>> currentDeckCardSOs = new List<ValueTuple<CardSO, int>>();
     [Header("µ¦ ¸ÞÀÌÄ¿")]
-    [SerializeField] TextMeshProUGUI[] deckCardTexts;
-    [SerializeField] Image[] deckCardImages;
+    [SerializeField] DeckMakerCard[] deckMakerCards;
     [SerializeField] Button preButton;
     [SerializeField] Button nextButton;
-
-    [SerializeField] Sprite legendSprite;
-    [SerializeField] Sprite normalSprite;
-    [SerializeField] Sprite magicSprite;
 
     [SerializeField] TMP_Dropdown heroTypeDropdown;
     AsyncOperationHandle<IList<CardSO>> op;
@@ -140,18 +135,12 @@ public class DeckMaker : MonoBehaviour
         {
             if (currentPage * cardMax + i < cardSOs.Count)
             {
-                deckCardTexts[i].text = cardSOs[currentPage * cardMax + i].cardName;
-                if (cardSOs[currentPage * cardMax + i].cardType == CardType.Magic)
-                    deckCardImages[i].sprite = magicSprite;
-                else if (cardSOs[currentPage * cardMax + i].grade == CardGrade.Lengend)
-                    deckCardImages[i].sprite = legendSprite;
-                else
-                    deckCardImages[i].sprite = normalSprite;
-                deckCardImages[i].gameObject.SetActive(true);
+                deckMakerCards[i].UpdateUI(cardSOs[currentPage * cardMax + i]);
+                deckMakerCards[i].gameObject.SetActive(true);
             }
             else
             {
-                deckCardImages[i].gameObject.SetActive(false);
+                deckMakerCards[i].gameObject.SetActive(false);
             }
         }
         UpdateShowPageButton();

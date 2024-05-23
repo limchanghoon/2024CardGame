@@ -5,7 +5,7 @@ using Fusion;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 
-public class CardMono : NetworkBehaviour, IPredict
+public class CardMono : NetworkBehaviour, IPredict, ICanUseGlow
 {
     public NetworkObject networkObject;
     public CardSO cardSO { get; protected set; }
@@ -20,8 +20,8 @@ public class CardMono : NetworkBehaviour, IPredict
     [SerializeField] protected GameObject frontFace;
     [SerializeField] protected GameObject backFace;
     [SerializeField] protected GameObject backFaceGlow;
-    [SerializeField] protected GameObject canUseGlow;
-  
+    [field: SerializeField] public GameObject canUseGlow { get; set; }
+
 
     [HideInInspector, Networked] public NetworkObject OwnerPlayer { get; set; }
     public Player owner { get; protected set; }
@@ -32,8 +32,9 @@ public class CardMono : NetworkBehaviour, IPredict
     public Quaternion originRot { get; set; }
     public Transform imageTr;
 
-    [Networked] public NetworkId uniqueID {  get; set; }
+    public NetworkId uniqueID { get { return networkObject.Id; } }
     [Networked] public int cardID {  get; set; }
+    public int cost { get; protected set; }
     protected AsyncOperationHandle<CardSO> op;
 
 

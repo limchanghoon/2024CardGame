@@ -18,6 +18,8 @@ public class RunnerHelper : MonoBehaviour, INetworkRunnerCallbacks
 
     public GameObject[] heroAbilities;
 
+    public int selectedSlotIdx;
+
 
     #region INetworkRunnerCallbacks콜백함수
 
@@ -124,11 +126,13 @@ public class RunnerHelper : MonoBehaviour, INetworkRunnerCallbacks
         }
         else if (runner.SceneManager.MainRunnerScene.buildIndex == 1)
         {
-            ShutdownGame(runner);
+            GameManager GM = GameObject.FindWithTag("GameManager").GetComponent<GameManager>();
+            if (!GM.isGameEnd)
+                GM.ShowResult(2);
         }
     }
 
-    private async void ShutdownGame(NetworkRunner runner)
+    public async void ShutdownGame(NetworkRunner runner)
     {
         await runner.Shutdown();
         SceneManager.LoadScene(0);
@@ -149,12 +153,11 @@ public class RunnerHelper : MonoBehaviour, INetworkRunnerCallbacks
         Debug.Log("OnSceneLoadDone : " + runner.SceneManager.MainRunnerScene.buildIndex.ToString());
         if (runner.SceneManager.MainRunnerScene.buildIndex == 1)
         {
-            int slotIdx = PlayerPrefs.GetInt("SelectedIndex");
             string dirPath = Path.Combine(Application.persistentDataPath, "Deck");
             if (!Directory.Exists(dirPath))
                 Directory.CreateDirectory(dirPath);
 
-            string path = Path.Combine(dirPath, "Slot" + slotIdx.ToString() + ".json");
+            string path = Path.Combine(dirPath, "Slot" + selectedSlotIdx.ToString() + ".json");
             if (!File.Exists(path))
             {
                 Debug.LogAssertion("덱 정보가 없음!!!");
@@ -166,7 +169,7 @@ public class RunnerHelper : MonoBehaviour, INetworkRunnerCallbacks
             loadedDeckData.Shuffle();
             Player player = spawnedCharacter.GetComponent<Player>();
 
-            runner.Spawn(heroAbilities[(int)loadedDeckData.heroType], null, null, runner.LocalPlayer, (_runner, _obj) =>
+            runner.Spawn(heroAbilities[(int)loadedDeckData.heroType], null, null, null, (_runner, _obj) =>
             {
                 HeroAbility heroAbility = _obj.GetComponent<HeroAbility>();
                 heroAbility.OwnerPlayer = spawnedCharacter;
@@ -177,10 +180,9 @@ public class RunnerHelper : MonoBehaviour, INetworkRunnerCallbacks
                 var op = Addressables.LoadAssetAsync<CardSO>("Assets/Data/CardData/" + loadedDeckData.cardIDs[i].ToString() + ".asset");
                 CardSO _data = op.WaitForCompletion();
                 if (_data.cardType == CardType.Minion) {
-                    runner.Spawn(player._MinionCardPrefab, null, null, runner.LocalPlayer, (_runner, _obj) =>
+                    runner.Spawn(player._MinionCardPrefab, null, null, null, (_runner, _obj) =>
                     {
                         CardMono cardMono = _obj.GetComponent<CardMono>();
-                        cardMono.uniqueID = _obj.Id;
                         cardMono.cardID = loadedDeckData.cardIDs[i];
                         cardMono.OwnerPlayer = spawnedCharacter;
                         player.deck.Add(_obj.Id);
@@ -188,10 +190,9 @@ public class RunnerHelper : MonoBehaviour, INetworkRunnerCallbacks
                 }
                 else if (_data.cardType == CardType.Magic)
                 {
-                    runner.Spawn(player._MagicCardPrefab, null, null, runner.LocalPlayer, (_runner, _obj) =>
+                    runner.Spawn(player._MagicCardPrefab, null, null, null, (_runner, _obj) =>
                     {
                         CardMono cardMono = _obj.GetComponent<CardMono>();
-                        cardMono.uniqueID = _obj.Id;
                         cardMono.cardID = loadedDeckData.cardIDs[i];
                         cardMono.OwnerPlayer = spawnedCharacter;
                         player.deck.Add(_obj.Id);

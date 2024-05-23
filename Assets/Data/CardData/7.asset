@@ -13,14 +13,14 @@ MonoBehaviour:
   m_Name: 7
   m_EditorClassIdentifier: 
   cardID: 7
-  cardName: "\uB2E8\uB2E8\uD55C \uAC70\uBD81\uC774"
+  cardName: "\uC624\uC544\uC2DC\uC2A4 \uBB34\uC1E0\uD131\uAC70\uBD81"
   cardType: 0
-  grade: 2
-  cost: 5
+  grade: 0
+  cost: 4
   power: 2
   health: 7
-  infomation: "<b>\uB3C4\uBC1C</b>"
-  speicalAbilityEnum: 1
+  infomation: 
+  speicalAbilityEnum: 0
   battleCry: {fileID: 0}
   battleCryTarget: 0
   deathRattle: {fileID: 0}

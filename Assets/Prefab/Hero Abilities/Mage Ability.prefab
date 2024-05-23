@@ -8,6 +8,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 915719796384031454, guid: c757ed64d6708cc4cb0ba384d2861ac5, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4066951705314290551, guid: c757ed64d6708cc4cb0ba384d2861ac5, type: 3}
       propertyPath: SortKey
       value: 698505491
@@ -72,6 +76,11 @@ PrefabInstance:
       insertIndex: 2
       addedObject: {fileID: 3079085118588528719}
   m_SourcePrefab: {fileID: 100100000, guid: c757ed64d6708cc4cb0ba384d2861ac5, type: 3}
+--- !u!1 &3898738313542433882 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 915719796384031454, guid: c757ed64d6708cc4cb0ba384d2861ac5, type: 3}
+  m_PrefabInstance: {fileID: 4228409027004309124}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &8068114455764327979 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6150193892875780271, guid: c757ed64d6708cc4cb0ba384d2861ac5, type: 3}
@@ -90,5 +99,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _OwnerPlayer: {fileID: 0}
+  heroSprite: {fileID: 21300000, guid: 592178fff8b52ab4e801ecaccfe9aa5c, type: 3}
+  <canUseGlow>k__BackingField: {fileID: 3898738313542433882}
+  cost: 2
   damage: 1
   fireball: {fileID: 5577810965282798752, guid: 964a3d5fb1b60a7479330ee41c429080, type: 3}

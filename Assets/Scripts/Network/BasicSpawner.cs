@@ -18,7 +18,7 @@ public class BasicSpawner : MonoBehaviour
     NetworkRunner newRunner;
 
     int page = 0;
-    public int selectedIndex = 0;
+    public int selectedSlotIdx = 0;
 
     public void GoToSelectDeck()
     {
@@ -45,8 +45,7 @@ public class BasicSpawner : MonoBehaviour
 
     public void SelectDeck(int idx)
     {
-        selectedIndex = page * 10 + idx;
-        PlayerPrefs.SetInt("SelectedIndex", selectedIndex);
+        selectedSlotIdx = page * 10 + idx;
         selectDeckPanel.SetActive(false);
         JoinGame();
     }
@@ -65,14 +64,15 @@ public class BasicSpawner : MonoBehaviour
         };
 
         newRunner = Instantiate(_networkRunnerPrefab).GetComponent<NetworkRunner>();
-        newRunner.GetComponent<RunnerHelper>().basicSpawner = this;
+        var _runnerHelper = newRunner.GetComponent<RunnerHelper>();
+        _runnerHelper.basicSpawner = this;
+        _runnerHelper.selectedSlotIdx = selectedSlotIdx;
 
         StartGameResult result = await newRunner.StartGame(startGameArgs);
         if (!result.Ok)
         {
             BtnControll(true, false, false, false);
             Debug.LogError(result.ErrorMessage);
-
         }
     }
 

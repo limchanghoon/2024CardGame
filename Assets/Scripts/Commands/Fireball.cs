@@ -9,7 +9,7 @@ public class Fireball : NetworkBehaviour, ICommand
     [SerializeField] int damage;
     Vector3 start;
 
-    public void Execute(CardMono mine, NetworkId target)
+    public void Execute(CardMono mine, NetworkId target, CommandType _commandType)
     {
         start = mine.owner.heroMono.transform.position;
         start.z = -200;

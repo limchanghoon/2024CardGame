@@ -60,9 +60,9 @@ MonoBehaviour:
   _playerPrefab:
     RawGuidValue: fca4cfbfc9df8ae4d8caca003ee4918d
   heroAbilities:
+  - {fileID: 8068114455764327979, guid: 2a1b6fb0bded0b34a907a3d5ae76f08f, type: 3}
   - {fileID: 342219166741672454, guid: b2e1c6f38ce1a824f97e8d1eff0ebf11, type: 3}
-  - {fileID: 342219166741672454, guid: b2e1c6f38ce1a824f97e8d1eff0ebf11, type: 3}
-  - {fileID: 342219166741672454, guid: b2e1c6f38ce1a824f97e8d1eff0ebf11, type: 3}
+  - {fileID: 342219166741672454, guid: aa5cb8e66a99192469e2f2631e365863, type: 3}
   - {fileID: 342219166741672454, guid: b2e1c6f38ce1a824f97e8d1eff0ebf11, type: 3}
   - {fileID: 342219166741672454, guid: b2e1c6f38ce1a824f97e8d1eff0ebf11, type: 3}
   - {fileID: 342219166741672454, guid: b2e1c6f38ce1a824f97e8d1eff0ebf11, type: 3}

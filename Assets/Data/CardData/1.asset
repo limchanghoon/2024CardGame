@@ -16,9 +16,9 @@ MonoBehaviour:
   cardName: "\uBC29\uD328\uBCD1"
   cardType: 0
   grade: 0
-  cost: 2
-  power: 1
-  health: 3
+  cost: 1
+  power: 0
+  health: 4
   infomation: "<b>\uB3C4\uBC1C</b>"
   speicalAbilityEnum: 1
   battleCry: {fileID: 0}

@@ -30,6 +30,8 @@ public class CardMono_Magic : CardMono
     public override void Spawned()
     {
         networkObject = GetComponent<NetworkObject>();
+        if (OwnerPlayer.HasStateAuthority)
+            networkObject.RequestStateAuthority();
 
         var op = Addressables.LoadAssetAsync<CardSO>("Assets/Data/CardData/" + cardID.ToString() + ".asset");
         CardSO _data = op.WaitForCompletion();
@@ -48,24 +50,25 @@ public class CardMono_Magic : CardMono
         nameText.text = cardSO.cardName;
         costText.text = cardSO.cost.ToString();
 
-        transform.DOMove(networkObject.HasInputAuthority ? new Vector3(11f, -2.5f, 0f) : new Vector3(11f, 2.5f, 0f), 0);
-        frontFace.SetActive(networkObject.HasInputAuthority);
-        backFace.SetActive(!networkObject.HasInputAuthority);
+        transform.DOMove(networkObject.HasStateAuthority ? new Vector3(11f, -2.5f, 0f) : new Vector3(11f, 2.5f, 0f), 0);
+        frontFace.SetActive(networkObject.HasStateAuthority);
+        backFace.SetActive(!networkObject.HasStateAuthority);
     }
 
 
     public void SetAsSO()
     {
-        abilityText.text = cardSO.infomation;
+        cost = cardSO.cost;
 
+        abilityText.text = cardSO.infomation;
         //if (cardSO.grade == CardGrade.Lengend)
         //    bgRender.sprite = legendSprite;
 
-        if (networkObject.HasInputAuthority)
+        if (networkObject.HasStateAuthority)
         {
             if (cardSO.magic)
             {
-                magicObj = Runner.Spawn(cardSO.magic, null, null, Runner.LocalPlayer);
+                magicObj = Runner.Spawn(cardSO.magic, null, null, null);
             }
         }
     }
@@ -85,7 +88,7 @@ public class CardMono_Magic : CardMono
     [Rpc(RpcSources.All, RpcTargets.All)]
     public void RPC_FireMagic(NetworkId _target)
     {
-        magic?.Execute(this, _target);
+        magic?.Execute(this, _target, CommandType.Magic);
     }
 
 }

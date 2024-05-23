@@ -13,14 +13,20 @@ MonoBehaviour:
   m_Name: 11
   m_EditorClassIdentifier: 
   cardID: 11
-  cardName: "\uC5BC\uC74C \uAC70\uC778"
-  grade: 2
-  cost: 8
-  power: 8
-  health: 8
-  infomation: "<b>\uC804\uD22C\uC758 \uD568\uC131</b> : \uD53C\uD574\uB97C 2 \uC90D\uB2C8\uB2E4\n<b>\uC8FD\uC74C\uC758
-    \uBA54\uC544\uB9AC</b> : \uBB34\uC791\uC704 \uB300\uC0C1\uC5D0\uAC8C 3\uC758
-    \uD53C\uD574\uB97C \uB098\uB204\uC5B4 \uC785\uD78C\uB2E4."
-  battleCry: {fileID: 8067344002431140743, guid: 095c330ca8d3c3b44bb7c17b5c25b7a5, type: 3}
+  cardName: "\uAD11\uAE30\uC758 \uD3ED\uD0C4\uB9C8"
+  cardType: 0
+  grade: 3
+  cost: 4
+  power: 3
+  health: 3
+  infomation: "<b>\uC804\uD22C\uC758 \uD568\uC131</b> : \uB2E4\uB978 \uBAA8\uB4E0
+    \uCE90\uB9AD\uD130\uC5D0\uAC8C 3\uC758 \uD53C\uD574\uB97C \uBB34\uC791\uC704\uB85C
+    \uB098\uB204\uC5B4 \uC785\uD799\uB2C8\uB2E4.\n<b>\uC8FD\uC74C\uC758 \uBA54\uC544\uB9AC</b>
+    : \uB2E4\uB978 \uBAA8\uB4E0 \uCE90\uB9AD\uD130\uC5D0\uAC8C 3\uC758 \uD53C\uD574\uB97C
+    \uBB34\uC791\uC704\uB85C \uB098\uB204\uC5B4 \uC785\uD799\uB2C8\uB2E4."
+  speicalAbilityEnum: 0
+  battleCry: {fileID: 6049999063202847296, guid: d8f9f5130e1225e4185ec58a885fc698, type: 3}
+  battleCryTarget: 0
   deathRattle: {fileID: 6049999063202847296, guid: d8f9f5130e1225e4185ec58a885fc698, type: 3}
-  battleCryTarget: -1
+  magicTarget: 0
+  magic: {fileID: 0}

@@ -43,20 +43,22 @@ public class FieldMouseEvent_HeroAbility : IMyMouseEvent
 
     public void OnMyMouseDown()
     {
-        if (!player.networkObject.HasInputAuthority) return;
+        if (!player.networkObject.HasStateAuthority) return;
         if (!player.IsMyTurn()) return;
         if (heroAbility.IsNeedTarget()) return;
+        if (heroAbility.count <= 0) return;
 
-        heroAbility.Execute(null, default);
+        heroAbility.Execute(null, default, CommandType.HeroAbility);
 
         return;
     }
 
     public void OnMyMouseDrag()
     {
-        if (!player.networkObject.HasInputAuthority) return;
+        if (!player.networkObject.HasStateAuthority) return;
         if (!player.IsMyTurn()) return;
         if (!heroAbility.IsNeedTarget()) return;
+        if (heroAbility.count <= 0) return;
 
         RaycastHit2D hit;
         bool _isTargetOn = IsTargetOn(out hit);
@@ -68,9 +70,10 @@ public class FieldMouseEvent_HeroAbility : IMyMouseEvent
 
     public void OnMyMouseUp()
     {
-        if (!player.networkObject.HasInputAuthority) return;
+        if (!player.networkObject.HasStateAuthority) return;
         if (!player.IsMyTurn()) return;
         if (!heroAbility.IsNeedTarget()) return;
+        if (heroAbility.count <= 0) return;
 
         player.gameManager.SetLineTarget(Vector3.zero, Vector3.zero, false, false);
         heroAbility.Predict(null);
@@ -81,7 +84,7 @@ public class FieldMouseEvent_HeroAbility : IMyMouseEvent
             player.gameManager.DisalbeFieldCardTooltip();
             var _networkObject = hit.collider.gameObject.GetComponent<ITargetable>();
             if (_networkObject == null) return;
-            heroAbility.Execute(null, _networkObject.GetNetworkId());
+            heroAbility.Execute(null, _networkObject.GetNetworkId(), CommandType.Magic);
         }
 
         return;

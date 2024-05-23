@@ -6,7 +6,7 @@ public class DrawCard : NetworkBehaviour, ICommand
 {
     [SerializeField] int amount;
 
-    public void Execute(CardMono mine, NetworkId target)
+    public void Execute(CardMono mine, NetworkId target, CommandType _commandType)
     {
         if (!mine.owner.IsMyTurn()) return;
         for (int i = 0; i < amount; i++)

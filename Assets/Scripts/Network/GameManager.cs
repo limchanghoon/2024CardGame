@@ -3,10 +3,10 @@ using Fusion;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 
@@ -19,8 +19,18 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
     public static Queue<Action> actionQueue = new Queue<Action>();
     public static bool isAction = false;
 
+    public bool isGameEnd = false;
+
     NetworkObject networkObject;
     [Networked, OnChangedRender(nameof(OnTimerChanged))] public int timer { get; set; }
+    public GameObject blockPanel;
+    [SerializeField] GameObject resultPanel;
+    [SerializeField] TextMeshProUGUI resultText;
+
+
+    public CrystalUI myCrystalUI;
+    public CrystalUI opponentCrystalUI;
+
     [SerializeField] TextMeshPro testText;
     [SerializeField] Button btn_EndTurn;
     [SerializeField] FieldCardTooltip fieldCardTooltip;
@@ -33,7 +43,7 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
     bool isTurnDelay = false;
     bool isDeathRattling = false;
 
-    [Networked, Capacity(2)] NetworkArray<int> order { get; }
+    //[Networked, Capacity(2)] NetworkArray<int> order { get; }
 
     Player[] _players = new Player[2];
     Player[] players { 
@@ -50,6 +60,7 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
 
     [SerializeField] private MyObjectPool hitObjectPool;
     public EffectManager effectManager;
+    public CardSO coinCardSO;
 
 
     private void Update()
@@ -64,6 +75,7 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
     public void AfterSpawned()
     {
         isAction = false;
+        isGameEnd = false;
         actionQueue.Clear();
         deathRattleQueue.Clear();
         if (Runner.SceneManager.MainRunnerScene.buildIndex == 0) return;
@@ -72,19 +84,13 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
 
         if (networkObject.HasStateAuthority)
         {
-            int idx = 0;
-            foreach (var playerRef_ in Runner.ActivePlayers)
-            {
-                order.Set(idx++, playerRef_.PlayerId);
-            }
+            //int idx = 0;
+            //foreach (var playerRef_ in Runner.ActivePlayers)
+            //{
+            //    order.Set(idx++, playerRef_.PlayerId);
+            //}
 
-            //StartCoroutine(CheckPlayersCoroutine());
-        }
-        else
-        {
-            // 무조건 로컬 플레이어가 아닌 유저가 뒤에 생성된다면 이렇게 해도 됨.
-            RPC_SettingAfterAllPlayerSpawned();
-            RPC_StartGame();
+            StartCoroutine(CheckPlayersCoroutine());
         }
     }
 
@@ -116,6 +122,8 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
     {
         btn_EndTurn.interactable = false;
         isTurnDelay = true;
+        players[0].OnUpdateCrystal();
+        players[1].OnUpdateCrystal();
         testText.text = "턴 넘어가는 중..";
         actionQueue.Enqueue(() =>
         {
@@ -124,6 +132,7 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
             DrawCard(current);
             if (IsMyTurn())
             {
+                GetMyPlayer().RPC_StartTurn();
                 testText.text = "내 차례";
                 btn_EndTurn.interactable = true;
             }
@@ -145,30 +154,53 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
     private void SettingAfterAllPlayerSpawned()
     {
         var playerObjs = GameObject.FindGameObjectsWithTag("Player");
-        int p0 = playerObjs[0].GetComponent<NetworkObject>().Runner.LocalPlayer.PlayerId;
-        int p1 = playerObjs[1].GetComponent<NetworkObject>().Runner.LocalPlayer.PlayerId;
-        if (p0 == order[0])
-        {
-            _players[0] = playerObjs[0].GetComponent<Player>();
-            _players[1] = playerObjs[1].GetComponent<Player>();
+        //int p0 = playerObjs[0].GetComponent<NetworkObject>().Runner.LocalPlayer.PlayerId;
 
-            heroMonos[0] = playerObjs[0].GetComponent<HeroMono>();
-            heroMonos[1] = playerObjs[1].GetComponent<HeroMono>();
+        // _players[0] : 마스터, _players[1] : 마스터 아님
+        if (networkObject.HasStateAuthority)
+        {
+            if (playerObjs[0].GetComponent<Player>().networkObject.HasStateAuthority)
+            {
+                _players[0] = playerObjs[0].GetComponent<Player>();
+                _players[1] = playerObjs[1].GetComponent<Player>();
+
+                heroMonos[0] = playerObjs[0].GetComponent<HeroMono>();
+                heroMonos[1] = playerObjs[1].GetComponent<HeroMono>();
+            }
+            else
+            {
+                _players[0] = playerObjs[1].GetComponent<Player>();
+                _players[1] = playerObjs[0].GetComponent<Player>();
+
+                heroMonos[0] = playerObjs[1].GetComponent<HeroMono>();
+                heroMonos[1] = playerObjs[0].GetComponent<HeroMono>();
+            }
         }
         else
         {
-            _players[0] = playerObjs[1].GetComponent<Player>();
-            _players[1] = playerObjs[0].GetComponent<Player>();
+            if (playerObjs[0].GetComponent<Player>().networkObject.HasStateAuthority)
+            {
+                _players[0] = playerObjs[1].GetComponent<Player>();
+                _players[1] = playerObjs[0].GetComponent<Player>();
 
-            heroMonos[0] = playerObjs[1].GetComponent<HeroMono>();
-            heroMonos[1] = playerObjs[0].GetComponent<HeroMono>();
+                heroMonos[0] = playerObjs[1].GetComponent<HeroMono>();
+                heroMonos[1] = playerObjs[0].GetComponent<HeroMono>();
+            }
+            else
+            {
+                _players[0] = playerObjs[0].GetComponent<Player>();
+                _players[1] = playerObjs[1].GetComponent<Player>();
+
+                heroMonos[0] = playerObjs[0].GetComponent<HeroMono>();
+                heroMonos[1] = playerObjs[1].GetComponent<HeroMono>();
+            }
         }
 
         //players[0].OnHandChanged();
         //players[1].OnHandChanged();
 
-        heroMonos[0].transform.DOMove(heroMonos[0].HasInputAuthority ? new Vector3(0, -2.5f, 1) : new Vector3(0, 2.5f, 1), 1f);
-        heroMonos[1].transform.DOMove(heroMonos[1].HasInputAuthority ? new Vector3(0, -2.5f, 1) : new Vector3(0, 2.5f, 1), 1f);
+        heroMonos[0].transform.DOMove(heroMonos[0].HasStateAuthority ? new Vector3(0, -2.8f, 1) : new Vector3(0, 2.8f, 1), 1f);
+        heroMonos[1].transform.DOMove(heroMonos[1].HasStateAuthority ? new Vector3(0, -2.8f, 1) : new Vector3(0, 2.8f, 1), 1f);
     }
 
 
@@ -183,6 +215,19 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
             DrawCard(1);
         }
         DrawCard(1);
+
+        // 동전 한 닢
+        if (players[1].HasStateAuthority)
+        {
+            NetworkObject _coin = Runner.Spawn(players[1]._MagicCardPrefab, null, null, null, (_runner, _obj) =>
+            {
+                CardMono cardMono = _obj.GetComponent<CardMono>();
+                cardMono.cardID = coinCardSO.cardID;
+                cardMono.OwnerPlayer = players[1].networkObject;
+                players[1].hand.Add(_obj.Id);
+            });
+        }
+
 
         if (!networkObject.HasStateAuthority) return;
 
@@ -219,7 +264,11 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
         curPlayer.deck.Remove(temp);
     }
 
-    public void TurnNext() => RPC_TurnNext(1 - current);
+    public void TurnNext()
+    {
+        GetMyPlayer().RPC_EndTurn();
+        RPC_TurnNext(1 - current);
+    }
 
     public CardMono GetCard(NetworkId _networkId)
     {
@@ -307,14 +356,14 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
 
     public int GetPlayerOrder(Player player)
     {
-        if (order[0] == player.Runner.LocalPlayer.PlayerId) return 0;
+        if (player == players[0]) return 0;
         else return 1;
     }
 
     public bool IsMyTurn()
     {
         if (isTurnDelay) return false;
-        return order.Get(current) == Runner.LocalPlayer.PlayerId;
+        return GetMyPlayer() == players[current];
     }
 
     public void ShowFieldCardTooltip(CardMono_Minion cardMono_Minion, Vector3 _pos)
@@ -392,5 +441,54 @@ public class GameManager : NetworkBehaviour, IAfterSpawned
     public void GenerateHitText(int damage, Vector3 _pos)
     {
         hitObjectPool.CreateOjbect().GetComponent<PoolingHit>().Set(damage, _pos);
+    }
+
+    public void GameEnd()
+    {
+        if (isGameEnd) return;
+        isGameEnd = true;
+        blockPanel.SetActive(true);
+        actionQueue.Enqueue(CheckWinner);
+    }
+
+    private void CheckWinner()
+    {
+        if(GetMyHereMono().isDie && GetOpponentHereMono().isDie)
+            ShowResult(0);
+        else if(GetMyHereMono().isDie)
+            ShowResult(1);
+        else if (GetOpponentHereMono().isDie)
+            ShowResult(2);
+        GameManager.isAction = false;
+    }
+
+    public void ShowResult(int result)
+    {
+        blockPanel.SetActive(true);
+        resultPanel.SetActive(true);
+        resultPanel.transform.DOScale(new Vector3(1f, 1f, 1f), 1f).SetEase(Ease.OutElastic);
+        if (result == 0)
+        {
+            resultText.text = "무승부!";
+        }
+        else if (result == 1)
+        {
+            resultText.text = "패배!";
+        }
+        else
+        {
+            resultText.text = "승리!";
+        }
+    }
+
+    public void Btn_LeftGame()
+    {
+        ShutdownGame(Runner);
+    }
+
+    public async void ShutdownGame(NetworkRunner runner)
+    {
+        await runner.Shutdown();
+        SceneManager.LoadScene(0);
     }
 }

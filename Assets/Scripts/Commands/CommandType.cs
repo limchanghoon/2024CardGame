@@ -2,5 +2,6 @@ public enum CommandType
 {
     BattleCry,
     DeathRattle,
-    Magic
+    Magic,
+    HeroAbility
 }

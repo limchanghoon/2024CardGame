@@ -8,7 +8,7 @@ public class PillarOfFire : NetworkBehaviour, ICommand
     [SerializeField] GameObject effect;
     [SerializeField] int damage;
 
-    public void Execute(CardMono mine, NetworkId target)
+    public void Execute(CardMono mine, NetworkId target, CommandType _commandType)
     {
         if (!mine.owner.IsMyTurn()) return;
         RPC_Execute(mine.owner.gameManager.GetOppenetPlayer().networkObject);

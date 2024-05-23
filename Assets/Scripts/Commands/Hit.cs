@@ -9,7 +9,7 @@ public class Hit : NetworkBehaviour, ICommand, IPredict
     [SerializeField] GameObject bobm;
     CardMono myCard;
 
-    public void Execute(CardMono mine, NetworkId target)
+    public void Execute(CardMono mine, NetworkId target, CommandType _commandType)
     {
         myCard = mine;
         if (!mine.owner.IsMyTurn()) return;

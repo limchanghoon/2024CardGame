@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: 6
   m_EditorClassIdentifier: 
   cardID: 6
-  cardName: "\uD0B9\uD06C\uB7A9"
+  cardName: "\uBC14\uC704 \uAD11\uC804\uC0AC"
   cardType: 0
   grade: 1
-  cost: 5
-  power: 7
-  health: 2
+  cost: 2
+  power: 5
+  health: 1
   infomation: "<b>\uB3C4\uBC1C</b>"
   speicalAbilityEnum: 1
   battleCry: {fileID: 0}

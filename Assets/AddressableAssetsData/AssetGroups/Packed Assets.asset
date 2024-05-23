@@ -143,6 +143,30 @@ MonoBehaviour:
     m_SerializedLabels:
     - CardData
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c315dd81be7391d4d94ad98c551d4796
+    m_Address: Assets/Data/CardData/22.asset
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CardData
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a3ae149ab086da24eb91231a3b14ef38
+    m_Address: Assets/Data/CardData/23.asset
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CardData
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6661a1ac26429ba4fb21858dc1396495
+    m_Address: Assets/Data/CardData/24.asset
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CardData
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 07051df25385b9b4ab308a7cdc0c146e
+    m_Address: Assets/Data/CardData/25.asset
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CardData
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: cfdf89a287464a54dbcb0a0b2a352f7c, type: 2}
   m_SchemaSet:

@@ -13,16 +13,16 @@ MonoBehaviour:
   m_Name: 18
   m_EditorClassIdentifier: 
   cardID: 18
-  cardName: "\uADF8\uB0E5 \uBA40\uB85D"
+  cardName: "\uB3C5\uCE68\uC544\uAC00\uBBF8 \uC800\uACA9\uC218"
   cardType: 0
   grade: 0
   cost: 1
   power: 2
   health: 1
-  infomation: 
+  infomation: "<b>\uC804\uD22C\uC758 \uD568\uC131</b> : \uD53C\uD574\uB97C 1 \uC90D\uB2C8\uB2E4"
   speicalAbilityEnum: 0
-  battleCry: {fileID: 0}
-  battleCryTarget: 0
+  battleCry: {fileID: 8067344002431140743, guid: 68cf5b73fa09a56479e6911ebc934682, type: 3}
+  battleCryTarget: -1
   deathRattle: {fileID: 0}
   magicTarget: 0
   magic: {fileID: 0}

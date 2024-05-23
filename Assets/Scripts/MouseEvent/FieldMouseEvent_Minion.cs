@@ -35,17 +35,19 @@ public class FieldMouseEvent_Minion : IMyMouseEvent
 
     public void OnMyMouseDown()
     {
-        if (!cardMono_Minion.networkObject.HasInputAuthority) return;
+        if (!cardMono_Minion.networkObject.HasStateAuthority) return;
         if (!cardMono_Minion.owner.IsMyTurn()) return;
+        if (!cardMono_Minion.canAttack) return;
         cardMono_Minion.isDragging = true;
         cardMono_Minion.owner.gameManager.DisalbeFieldCardTooltip();
     }
 
     public void OnMyMouseUp()
     {
-        if (!cardMono_Minion.networkObject.HasInputAuthority) return;
+        if (!cardMono_Minion.networkObject.HasStateAuthority) return;
         if (!cardMono_Minion.isDragging) return;
         if (!cardMono_Minion.owner.IsMyTurn()) return;
+        if (!cardMono_Minion.canAttack) return;
         cardMono_Minion.isDragging = false;
         cardMono_Minion.owner.gameManager.SetLineTarget(Vector3.zero, Vector3.zero, false, false);
         cardMono_Minion.Predict(null);
@@ -62,9 +64,10 @@ public class FieldMouseEvent_Minion : IMyMouseEvent
 
     public void OnMyMouseDrag()
     {
-        if (!cardMono_Minion.networkObject.HasInputAuthority) return;
+        if (!cardMono_Minion.networkObject.HasStateAuthority) return;
         if (!cardMono_Minion.isDragging) return;
         if (!cardMono_Minion.owner.IsMyTurn()) return;
+        if (!cardMono_Minion.canAttack) return;
         RaycastHit2D hit;
         bool _isTargetOn = IsTargetOn(out hit);
         cardMono_Minion.owner.gameManager.SetLineTarget(cardMono_Minion.gameObject.transform.position, Camera.main.ScreenToWorldPoint(Input.mousePosition), true, _isTargetOn);

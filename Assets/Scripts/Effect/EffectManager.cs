@@ -13,6 +13,12 @@ public class EffectManager : MonoBehaviour
         dieEffectPool.CreateOjbect().transform.DOMove(_pos, 0);
     }
 
+    public void DoBattleCryEffect(Vector3 _pos)
+    {
+        _pos.z = -300;
+        BattleCryEffectPool.CreateOjbect().transform.DOMove(_pos, 0);
+    }
+
     public void DoDeathRattleEffect(Vector3 _pos)
     {
         _pos.z = -300;

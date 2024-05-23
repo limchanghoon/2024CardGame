@@ -91,23 +91,23 @@ public class HandMouseEvent_Magic : IMyMouseEvent
 
     public void OnIsZoomingChanged()
     {
-        if (cardMono_Magic.networkObject.HasInputAuthority) return;
+        if (cardMono_Magic.networkObject.HasStateAuthority) return;
         if (cardMono_Magic.isZooming || cardMono_Magic.isDragging) cardMono_Magic.GetBackFaceGlow().SetActive(true);
         else cardMono_Magic.GetBackFaceGlow().SetActive(false);
     }
 
     public void OnMyMouseDown()
     {
-        if (!cardMono_Magic.networkObject.HasInputAuthority) return;
+        if (!cardMono_Magic.networkObject.HasStateAuthority) return;
         cardMono_Magic.isDragging = true;
     }
 
     public void OnMyMouseUp()
     {
-        if (!cardMono_Magic.networkObject.HasInputAuthority) return;
+        if (!cardMono_Magic.networkObject.HasStateAuthority) return;
         if (!cardMono_Magic.isDragging) return;
 
-        if (!cardMono_Magic.owner.IsMyTurn() || DraggingCardInMyHandArea())
+        if (!cardMono_Magic.owner.IsMyTurn() || DraggingCardInMyHandArea() || !cardMono_Magic.owner.IsCrystalEnough(cardMono_Magic.cost))
         {
             GoBack();
             cardMono_Magic.isDragging = false;
@@ -134,7 +134,7 @@ public class HandMouseEvent_Magic : IMyMouseEvent
 
     public void OnMyMouseDrag()
     {
-        if (!cardMono_Magic.networkObject.HasInputAuthority) return;
+        if (!cardMono_Magic.networkObject.HasStateAuthority) return;
         if (!cardMono_Magic.isDragging) return;
 
         Vector3 _pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -158,7 +158,7 @@ public class HandMouseEvent_Magic : IMyMouseEvent
 
     public void OnMyMouseEnter()
     {
-        if (!cardMono_Magic.networkObject.HasInputAuthority) return;
+        if (!cardMono_Magic.networkObject.HasStateAuthority) return;
         if (cardMono_Magic.isDragging || cardMono_Magic.isZooming) return;
         cardMono_Magic.isZooming = true;
         cardMono_Magic.imageTr.DOScale(Vector3.one * 1.3f, 0.2f);
@@ -169,7 +169,7 @@ public class HandMouseEvent_Magic : IMyMouseEvent
 
     public void OnMyMouseExit()
     {
-        if (!cardMono_Magic.networkObject.HasInputAuthority) return;
+        if (!cardMono_Magic.networkObject.HasStateAuthority) return;
         if (cardMono_Magic.isDragging) return;
         cardMono_Magic.isZooming = false;
         cardMono_Magic.imageTr.DOScale(new Vector3(0.3f, 0.3f, 1f), 0.2f);

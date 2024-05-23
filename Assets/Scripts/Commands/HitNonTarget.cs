@@ -5,17 +5,16 @@ using UnityEngine;
 
 public class HitNonTarget : NetworkBehaviour, ICommand
 {
-    [SerializeField] CommandType commandType;
     [SerializeField] int damage;
     [SerializeField] int randomCount;
     [SerializeField] GameObject bobm;
-    Vector3 start;
+    CommandType commandType;
+    CardMono mine;
 
-    public void Execute(CardMono _mine, NetworkId target)
+    public void Execute(CardMono _mine, NetworkId target, CommandType _commandType)
     {
-        CardMono_Minion mine = (CardMono_Minion)_mine;
-        start = mine.transform.position;
-        start.z = -200;
+        commandType = _commandType;
+        mine = _mine;
         if (!mine.owner.IsMyTurn()) return;
         List<ITargetable> targets = new List<ITargetable>();
         foreach (var hero in mine.owner.gameManager.heroMonos)
@@ -67,23 +66,32 @@ public class HitNonTarget : NetworkBehaviour, ICommand
         var targetHit = _target.GetComponent<ITargetable>();
         int _damage = targetHit.PredictHit(damage);
 
-        GameManager.actionQueue.Enqueue(() => StartCoroutine(HitCoroutine(_damage, targetHit)));
+        Vector3 startPos = Vector3.zero;
+        if (commandType == CommandType.DeathRattle)
+            startPos = mine.transform.position;
+        else if(commandType == CommandType.Magic || commandType == CommandType.HeroAbility)
+            startPos = mine.owner.transform.position;
+        startPos.z = -200;
+
+        GameManager.actionQueue.Enqueue(() => StartCoroutine(HitCoroutine(_damage, targetHit, startPos)));
         targetHit.Hit(damage);
         targetHit.CheckIsFirstDie();
     }
 
-    IEnumerator HitCoroutine(int _damage, ITargetable targetHit)
+    IEnumerator HitCoroutine(int _damage, ITargetable targetHit, Vector3 startPos)
     {
+        if (commandType == CommandType.BattleCry)
+            startPos = mine.transform.position;
         Vector3 end = targetHit.GetTargetGameObject().transform.position;
         end.z = -200;
 
-        GameObject _BOBM = Instantiate(bobm,start,Quaternion.identity);
+        GameObject _BOBM = Instantiate(bobm, startPos, Quaternion.identity);
         float t = 0f;
         while (t < 1f)
         {
             yield return null;
             t += Time.deltaTime;
-            _BOBM.transform.position = Vector3.Lerp(start, end, t);
+            _BOBM.transform.position = Vector3.Lerp(startPos, end, t);
         }
         Destroy(_BOBM);
         targetHit.UpdateHit(_damage);

@@ -1,16 +1,51 @@
+using DG.Tweening;
 using Fusion;
 using UnityEngine;
 
-public class HeroAbility : NetworkBehaviour, ICommand, IPredict
+public class HeroAbility : NetworkBehaviour, ICommand, IPredict, ICanUseGlow
 {
     [HideInInspector, Networked] public NetworkObject OwnerPlayer { get; set; }
+    [SerializeField] protected Sprite heroSprite;
+    protected SpriteRenderer spriteRenderer;
     protected Player myPlayer;
+
+    [field : SerializeField] public GameObject canUseGlow { get; set; }
+    public int cost;
+
+    public int count { get; set; }
 
     public override void Spawned()
     {
+        spriteRenderer = GetComponent<SpriteRenderer>();
         myPlayer = OwnerPlayer.GetComponent<Player>();
+        myPlayer.heroAbility = this;
+        myPlayer.GetComponent<SpriteRenderer>().sprite = heroSprite;
         transform.parent = OwnerPlayer.transform;
-        transform.localPosition = new Vector3(1.5f, 0f, 0f);
+        transform.localPosition = new Vector3(5f, 0f, 0f);
+    }
+
+    public void Reload()
+    {
+        RPC_ColorChange(true);
+        count = 1;
+    }
+
+    public bool DecreaseCount()
+    {
+        if (count <= 0) return false;
+        count--;
+        if(count <= 0)
+        {
+            RPC_ColorChange(false);
+        }
+        return true;
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    public void RPC_ColorChange(bool isON)
+    {
+        if (isON) spriteRenderer.DOColor(Color.white, 0.5f);
+        else spriteRenderer.DOColor(Color.black, 0.5f);
     }
 
     // ¸¶¿ì½º Å¸°Ù
@@ -54,7 +89,7 @@ public class HeroAbility : NetworkBehaviour, ICommand, IPredict
         currentMouseEvent.OnIsZoomingChanged();
     }
 
-    public virtual void Execute(CardMono mine, NetworkId target)
+    public virtual void Execute(CardMono mine, NetworkId target, CommandType _commandType)
     {
         throw new System.NotImplementedException();
     }

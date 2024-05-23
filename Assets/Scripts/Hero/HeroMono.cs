@@ -1,5 +1,6 @@
 using Fusion;
 using System.Collections;
+using System.ComponentModel;
 using TMPro;
 using UnityEngine;
 
@@ -14,7 +15,7 @@ public class HeroMono : NetworkBehaviour, ITargetable
 
     public int currentPower { get; set; }
     public int currentHealth { get; set; }
-    bool isDie = false;
+    public bool isDie { get; private set; }
     public bool isTaunt { get; set; }
 
     private void Awake()
@@ -22,6 +23,7 @@ public class HeroMono : NetworkBehaviour, ITargetable
         currentPower = 0;
         currentHealth = 30;
         isTaunt = false;
+        isDie = false;
 
         visiblePower = currentPower;
         visibleHealth = currentHealth;
@@ -29,7 +31,7 @@ public class HeroMono : NetworkBehaviour, ITargetable
 
     public bool CanBeTarget()
     {
-        return true;
+        return !isDie;
     }
 
     public bool CanBeDirectAttackTarget()
@@ -50,6 +52,7 @@ public class HeroMono : NetworkBehaviour, ITargetable
     {
         if (isDie) return;
         isDie = true;
+        player.gameManager.GameEnd();
     }
 
     public TargetType GetTargetType()
@@ -75,7 +78,6 @@ public class HeroMono : NetworkBehaviour, ITargetable
         if (isDie) return false;
         if (currentHealth <= 0)
         {
-            isDie = true;
             Die();
             return true;
         }

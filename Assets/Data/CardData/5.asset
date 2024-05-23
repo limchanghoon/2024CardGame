@@ -13,14 +13,17 @@ MonoBehaviour:
   m_Name: 5
   m_EditorClassIdentifier: 
   cardID: 5
-  cardName: "\uCD1D\uAC80\uC0AC"
-  grade: 3
-  cost: 3
-  power: 3
+  cardName: "\uC804\uB9AC\uD488 \uC218\uC9D1\uAC00"
+  cardType: 0
+  grade: 0
+  cost: 2
+  power: 2
   health: 1
-  infomation: "<b>\uC804\uD22C\uC758 \uD568\uC131</b> : \uCE74\uB4DC\uB97C 1\uC7A5
-    \uB4DC\uB85C\uC6B0\uD55C\uB2E4.\n<b>\uC8FD\uC74C\uC758 \uBA54\uC544\uB9AC</b>
-    : \uCE74\uB4DC\uB97C 1\uC7A5 \uB4DC\uB85C\uC6B0\uD55C\uB2E4."
-  battleCry: {fileID: 8067344002431140743, guid: 7019bb5549c698f4bbc00c2c6c06370d, type: 3}
-  deathRattle: {fileID: 8067344002431140743, guid: 7019bb5549c698f4bbc00c2c6c06370d, type: 3}
+  infomation: "<b>\uC8FD\uC74C\uC758 \uBA54\uC544\uB9AC</b> : \uCE74\uB4DC\uB97C
+    1\uC7A5 \uB4DC\uB85C\uC6B0\uD55C\uB2E4."
+  speicalAbilityEnum: 0
+  battleCry: {fileID: 0}
   battleCryTarget: 0
+  deathRattle: {fileID: 8067344002431140743, guid: 7019bb5549c698f4bbc00c2c6c06370d, type: 3}
+  magicTarget: 0
+  magic: {fileID: 0}

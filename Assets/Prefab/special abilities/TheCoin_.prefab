@@ -9,10 +9,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4396637721205737289}
-  - component: {fileID: 4757104465494018034}
+  - component: {fileID: 126098625515529685}
   - component: {fileID: -3554215337383628979}
   m_Layer: 0
-  m_Name: Hit_
+  m_Name: TheCoin_
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -33,7 +33,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &4757104465494018034
+--- !u!114 &126098625515529685
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -42,11 +42,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 8067344002431140743}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6849f4a68d2aa52418a1baeedac3cbe4, type: 3}
+  m_Script: {fileID: 11500000, guid: fe3f11e631b68c3418894cfb03910efd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  damage: 2
-  bobm: {fileID: 2457630144602951739, guid: 1f7342718ce120b4b92c4f358db9f877, type: 3}
+  amount: 1
 --- !u!114 &-3554215337383628979
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -59,9 +58,9 @@ MonoBehaviour:
   m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  SortKey: 537391916
+  SortKey: 1354513894
   ObjectInterest: 1
   Flags: 262145
   NestedObjects: []
   NetworkedBehaviours:
-  - {fileID: 4757104465494018034}
+  - {fileID: 126098625515529685}

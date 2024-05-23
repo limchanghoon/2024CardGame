@@ -100,21 +100,19 @@ MonoBehaviour:
   legendSprite: {fileID: 21300000, guid: babe8cd3d04b9b64f8690026a2a11226, type: 3}
   nameText: {fileID: 3443084474360518258}
   costText: {fileID: 3296747385987649741}
-  powerText: {fileID: 3527659263035571085}
-  healthText: {fileID: 8965758205080042148}
   abilityText: {fileID: 1212862001620493458}
   frontFace: {fileID: 8575808193432530048}
   backFace: {fileID: 6140788084297274244}
-  fieldFace: {fileID: 2301509522598847961}
   backFaceGlow: {fileID: 1274800659090174875}
-  canUseGlow: {fileID: 1902164892637203058}
+  <canUseGlow>k__BackingField: {fileID: 1902164892637203058}
   _OwnerPlayer: {fileID: 0}
   _isZooming: 0
   _isDragging: 0
   imageTr: {fileID: 4495988089649744104}
-  _uniqueID:
-    Raw: 0
   _cardID: 0
+  powerText: {fileID: 3527659263035571085}
+  healthText: {fileID: 8965758205080042148}
+  fieldFace: {fileID: 2301509522598847961}
   fieldPowerText: {fileID: 2636878992745368814}
   fieldHealthText: {fileID: 278531926882295561}
   canAttackGlow: {fileID: 3334194898235211462}
@@ -136,7 +134,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   SortKey: 4265069831
   ObjectInterest: 1
-  Flags: 262145
+  Flags: 786433
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 5216545955429701255}
@@ -422,7 +420,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0.09}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.95, y: 0.95, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4495988089649744104}
@@ -1109,7 +1107,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0.03, y: 0.8, z: -0.01}
-  m_LocalScale: {x: 1.92, y: 2.61, z: 1}
+  m_LocalScale: {x: 2, y: 2.8, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4495988089649744104}

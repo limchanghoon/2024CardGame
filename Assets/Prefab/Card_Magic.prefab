@@ -444,13 +444,11 @@ MonoBehaviour:
   frontFace: {fileID: 5538453122586962790}
   backFace: {fileID: 5930357957399523881}
   backFaceGlow: {fileID: 4667585368663935888}
-  canUseGlow: {fileID: 0}
+  <canUseGlow>k__BackingField: {fileID: 5529764334417306521}
   _OwnerPlayer: {fileID: 0}
   _isZooming: 0
   _isDragging: 0
   imageTr: {fileID: 1279234739551746696}
-  _uniqueID:
-    Raw: 0
   _cardID: 0
   _magicObj: {fileID: 0}
 --- !u!114 &4281865044590393020
@@ -467,7 +465,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   SortKey: 4099914240
   ObjectInterest: 1
-  Flags: 262145
+  Flags: 786433
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 5191173908426449233}
@@ -498,7 +496,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0.09}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.98, y: 0.98, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1279234739551746696}
@@ -544,7 +542,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: 3623d3f731b841141a2548c80b8256ed, type: 3}
+  m_Sprite: {fileID: 21300000, guid: f2d47ea299db58349a23d073fc19034c, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0

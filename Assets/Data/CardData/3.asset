@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: 3
   m_EditorClassIdentifier: 
   cardID: 3
-  cardName: "\uB098\uC57D\uD55C \uBA40\uB85D"
+  cardName: "\uB178\uC6C0 \uBC1C\uBA85\uAC00"
   cardType: 0
   grade: 0
-  cost: 1
-  power: 1
-  health: 1
+  cost: 4
+  power: 2
+  health: 4
   infomation: "<b>\uC804\uD22C\uC758 \uD568\uC131</b> : \uCE74\uB4DC\uB97C 1\uC7A5
     \uB4DC\uB85C\uC6B0\uD55C\uB2E4."
   speicalAbilityEnum: 0

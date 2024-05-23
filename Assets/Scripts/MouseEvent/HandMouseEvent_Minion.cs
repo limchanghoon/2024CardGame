@@ -132,23 +132,24 @@ public class HandMouseEvent_Minion : IMyMouseEvent
     // ~~인터페이스~~
     public void OnIsZoomingChanged()
     {
-        if (cardMono_Minion.networkObject.HasInputAuthority) return;
+        if (cardMono_Minion.networkObject.HasStateAuthority) return;
         if (cardMono_Minion.isZooming || cardMono_Minion.isDragging) cardMono_Minion.GetBackFaceGlow().SetActive(true);
         else cardMono_Minion.GetBackFaceGlow().SetActive(false);
     }
 
     public void OnMyMouseDown()
     {
-        if (!cardMono_Minion.networkObject.HasInputAuthority) return;
+        if (!cardMono_Minion.networkObject.HasStateAuthority) return;
         cardMono_Minion.isDragging = true;
     }
 
     public void OnMyMouseUp()
     {
-        if (!cardMono_Minion.networkObject.HasInputAuthority) return;
+        if (!cardMono_Minion.networkObject.HasStateAuthority) return;
         if (!cardMono_Minion.isDragging) return;
 
-        if (!cardMono_Minion.owner.IsMyTurn() || DraggingCardInMyHandArea() || cardMono_Minion.owner.field.Count == cardMono_Minion.owner.field.Capacity)
+        if (!cardMono_Minion.owner.IsMyTurn() || DraggingCardInMyHandArea() 
+            || cardMono_Minion.owner.field.Count == cardMono_Minion.owner.field.Capacity || !cardMono_Minion.owner.IsCrystalEnough(cardMono_Minion.cost))
         {
             GoBack();
             cardMono_Minion.isDragging = false;
@@ -175,7 +176,7 @@ public class HandMouseEvent_Minion : IMyMouseEvent
 
     public void OnMyMouseDrag()
     {
-        if (!cardMono_Minion.networkObject.HasInputAuthority) return;
+        if (!cardMono_Minion.networkObject.HasStateAuthority) return;
         if (!cardMono_Minion.isDragging) return;
 
         Vector3 _pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -222,7 +223,7 @@ public class HandMouseEvent_Minion : IMyMouseEvent
 
     public void OnMyMouseEnter()
     {
-        if (!cardMono_Minion.networkObject.HasInputAuthority) return;
+        if (!cardMono_Minion.networkObject.HasStateAuthority) return;
         if (cardMono_Minion.isDragging || cardMono_Minion.isZooming) return;
         cardMono_Minion.isZooming = true;
         cardMono_Minion.imageTr.DOScale(Vector3.one * 1.3f, 0.2f);
@@ -233,7 +234,7 @@ public class HandMouseEvent_Minion : IMyMouseEvent
 
     public void OnMyMouseExit()
     {
-        if (!cardMono_Minion.networkObject.HasInputAuthority) return;
+        if (!cardMono_Minion.networkObject.HasStateAuthority) return;
         if (cardMono_Minion.isDragging) return;
         cardMono_Minion.isZooming = false;
         cardMono_Minion.imageTr.DOScale(new Vector3(0.3f, 0.3f, 1f), 0.2f);

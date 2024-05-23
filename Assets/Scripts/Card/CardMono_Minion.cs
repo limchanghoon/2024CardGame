@@ -62,8 +62,15 @@ public class CardMono_Minion : CardMono, ITargetable
     private int canAttackCount = 0;
     public bool canAttack
     {
-        get { return canAttackCount > 0; }
-        private set { canAttackCount = 1; }
+        get { return canAttackCount > 0 && currentPower > 0 && currentHealth > 0 && !isDie; }
+        set 
+        {
+            if (value)
+                canAttackCount = 1;
+            else
+                canAttackCount = 0;
+            UpdateAttackGlow();
+        }
     }
 
     bool isDie = false;
@@ -75,10 +82,11 @@ public class CardMono_Minion : CardMono, ITargetable
     public int currentPower { get; set; }
     public int currentHealth { get; set; }
 
-
     public override void Spawned()
     {
         networkObject = GetComponent<NetworkObject>();
+        if (OwnerPlayer.HasStateAuthority)
+            networkObject.RequestStateAuthority();
 
         var op = Addressables.LoadAssetAsync<CardSO>("Assets/Data/CardData/" + cardID.ToString() + ".asset");
         CardSO _data = op.WaitForCompletion();
@@ -100,15 +108,17 @@ public class CardMono_Minion : CardMono, ITargetable
         powerText.text = cardSO.power.ToString();
         healthText.text = cardSO.health.ToString();
 
-        transform.DOMove(networkObject.HasInputAuthority ? new Vector3(11f, -2.5f, 0f) : new Vector3(11f, 2.5f, 0f), 0);
-        frontFace.SetActive(networkObject.HasInputAuthority);
-        backFace.SetActive(!networkObject.HasInputAuthority);
+        transform.DOMove(networkObject.HasStateAuthority ? new Vector3(11f, -2.5f, 0f) : new Vector3(11f, 2.5f, 0f), 0);
+        frontFace.SetActive(networkObject.HasStateAuthority);
+        backFace.SetActive(!networkObject.HasStateAuthority);
     }
 
 
     [Rpc(RpcSources.All, RpcTargets.All)]
     public void RPC_Attack(NetworkId _uniqueID)
     {
+        canAttackCount--;
+        UpdateAttackGlow();
         var _targetObj = owner.gameManager.GetNetworkObject(_uniqueID);
         var _target = _targetObj.GetComponent<ITargetable>();
 
@@ -132,6 +142,12 @@ public class CardMono_Minion : CardMono, ITargetable
         owner.gameManager.EnqueueChangeField();
     }
 
+    public void UpdateAttackGlow()
+    {
+        if(canAttack) canAttackGlow.SetActive(true);
+        else canAttackGlow.SetActive(false);
+    }
+
 
     public void SetActivePrediction(bool _active)
     {
@@ -152,7 +168,7 @@ public class CardMono_Minion : CardMono, ITargetable
 
     public TargetType GetTargetType()
     {
-        if (networkObject.HasInputAuthority) return TargetType.MyMinion;
+        if (networkObject.HasStateAuthority) return TargetType.MyMinion;
         else return TargetType.OpponentMinion;
     }
 
@@ -188,6 +204,7 @@ public class CardMono_Minion : CardMono, ITargetable
         if (currentHealth <= 0)
         {
             isDie = true;
+            UpdateAttackGlow();
             owner.DestroyCardOfField(this);
             return true;
         }
@@ -217,7 +234,7 @@ public class CardMono_Minion : CardMono, ITargetable
     {
         //임시
         owner.gameManager.effectManager.DoDieEffect(transform.position);
-        SetPR(networkObject.HasInputAuthority ? new Vector3(11f, -2.5f, 0f) : new Vector3(11f, 2.5f, 0f), Quaternion.identity, 0);
+        SetPR(networkObject.HasStateAuthority ? new Vector3(11f, -2.5f, 0f) : new Vector3(11f, 2.5f, 0f), Quaternion.identity, 0);
         owner.gameManager.UpdateFieldCardTooltip();
         //owner.gameManager.ChangeField();
     }
@@ -226,6 +243,8 @@ public class CardMono_Minion : CardMono, ITargetable
 
     public void SetAsSO()
     {
+        cost = cardSO.cost;
+
         currentPower = cardSO.power;
         currentHealth = cardSO.health;
         abilityText.text = cardSO.infomation;
@@ -233,29 +252,27 @@ public class CardMono_Minion : CardMono, ITargetable
         visiblePower = currentPower;
         visibleHealth = currentHealth;
         if (cardSO.grade == CardGrade.Lengend)
+        {
             bgRender.sprite = legendSprite;
+            canUseGlow.GetComponent<SpriteRenderer>().sprite = legendSprite;
+        }
 
-        if (networkObject.HasInputAuthority)
+        if (networkObject.HasStateAuthority)
         {
             if (cardSO.battleCry)
             {
-                battleCryObj = Runner.Spawn(cardSO.battleCry, null, null, Runner.LocalPlayer);
+                battleCryObj = Runner.Spawn(cardSO.battleCry, null, null, null);
             }
             if (cardSO.deathRattle)
             {
-                deathRattleObj = Runner.Spawn(cardSO.deathRattle, null, null, Runner.LocalPlayer);
+                deathRattleObj = Runner.Spawn(cardSO.deathRattle, null, null, null);
             }
         }
         if (cardSO.deathRattle)
             deathRattleIcon.SetActive(true);
 
-        // 도발, 돌진, 천상의 보호막 등 특수 능력 처리
         specialAbilityEnum = cardSO.speicalAbilityEnum;
-        if (specialAbilityEnum.HasFlag(SpecialAbilityEnum.taunt))
-            tauntIcon.SetActive(true);
     }
-
-
 
     //[Rpc(RpcSources.All, RpcTargets.All)]
     public void ChangeCardState(CardState cardState)
@@ -265,8 +282,8 @@ public class CardMono_Minion : CardMono, ITargetable
             case CardState.Hand:
                 currentMouseEvent = handMouseEvent;
 
-                frontFace.SetActive(networkObject.HasInputAuthority);
-                backFace.SetActive(!networkObject.HasInputAuthority);
+                frontFace.SetActive(networkObject.HasStateAuthority);
+                backFace.SetActive(!networkObject.HasStateAuthority);
                 fieldFace.SetActive(false);
                 gameObject.layer = LayerMask.NameToLayer("HandCard");
                 break;
@@ -292,14 +309,14 @@ public class CardMono_Minion : CardMono, ITargetable
     [Rpc(RpcSources.All, RpcTargets.All)]
     public void RPC_DoEffect(CommandType _commandType)
     {
-        Vector3 _pos = transform.position;
         switch (_commandType)
         {
             case CommandType.BattleCry:
-                GameManager.actionQueue.Enqueue(() => EffectBattelCry(_pos));
+                GameManager.actionQueue.Enqueue(() => EffectBattelCry(transform));
                 break;
 
             case CommandType.DeathRattle:
+                Vector3 _pos = transform.position;
                 GameManager.actionQueue.Enqueue(() => EffectDeathRattle(_pos));
                 break;
             default:
@@ -307,9 +324,9 @@ public class CardMono_Minion : CardMono, ITargetable
         }
     }
 
-    public void EffectBattelCry(Vector3 _pos)
+    public void EffectBattelCry(Transform _tr)
     {
-        Debug.Log("전투의 함성 이펙트 넣어야함!!");
+        owner.gameManager.effectManager.DoBattleCryEffect(_tr.position);
         GameManager.isAction = false;
     }
 
@@ -330,21 +347,23 @@ public class CardMono_Minion : CardMono, ITargetable
     [Rpc(RpcSources.All, RpcTargets.All)]
     public void RPC_BattleCry(NetworkId _target)
     {
-        battleCry?.Execute(this, _target);
+        battleCry?.Execute(this, _target, CommandType.BattleCry);
     }
 
-    public void DeathRattle()
+    public void DeathRattle(int _location)
     {
         if (!owner.IsMyTurn()) return;
         if (deathRattleObj == null) return;
         RPC_DoEffect(CommandType.DeathRattle);
-        RPC_DeathRattle();
+        NetworkId _location_NetworkId = new NetworkId();
+        _location_NetworkId.Raw = (uint)_location;
+        RPC_DeathRattle(_location_NetworkId);
     }
 
     [Rpc(RpcSources.All, RpcTargets.All)]
-    public void RPC_DeathRattle()
+    public void RPC_DeathRattle(NetworkId _location_NetworkId)
     {
-        deathRattle?.Execute(this, default);
+        deathRattle?.Execute(this, _location_NetworkId, CommandType.DeathRattle);
     }
 
     public override void Predict(GameObject obj)
@@ -353,7 +372,20 @@ public class CardMono_Minion : CardMono, ITargetable
         if (iTargetable == target) return;
         if (iTargetable != target) target?.SetActivePrediction(false);
         target = iTargetable;
-        if (target == null) return;
+        if (target == null)
+        {
+            SetActivePrediction(false);
+            return;
+        }
         target.SetActivePrediction(target.DieIfHit(currentPower));
+        SetActivePrediction(DieIfHit(target.currentPower));
+    }
+
+    public void ActiveSpecialAbility()
+    {
+        // 돌진 있으면 공격가능!
+        canAttack = specialAbilityEnum.HasFlag(SpecialAbilityEnum.rush);
+        // 도발 이미지 켜기
+        tauntIcon.SetActive(specialAbilityEnum.HasFlag(SpecialAbilityEnum.taunt));
     }
 }

@@ -14,11 +14,13 @@ public class MageAbility : HeroAbility
         currentMouseEvent = new FieldMouseEvent_HeroAbility(this, OwnerPlayer.GetComponent<Player>());
     }
 
-    public override void Execute(CardMono mine, NetworkId target)
+    public override void Execute(CardMono mine, NetworkId target, CommandType _commandType)
     {
         if (!myPlayer.IsMyTurn()) return;
+        if (!myPlayer.IsCrystalEnough(cost)) return;
+        if (!DecreaseCount()) return;
+        myPlayer.RPC_UseCrystal(cost);
         RPC_Execute(myPlayer.gameManager.GetNetworkObject(target).GetComponent<NetworkObject>());
-
         // ав╦ч!
         myPlayer.gameManager.DoDeathRattleOneLayer();
         myPlayer.gameManager.RPC_EnqueueChangeField();
